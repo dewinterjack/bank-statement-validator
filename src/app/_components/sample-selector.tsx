@@ -13,13 +13,24 @@ export const SampleSelector: React.FC<SampleSelectorProps> = ({
   selectedSample,
   onSampleSelect,
 }) => {
-  const { data: samples, isLoading: isLoadingSamples } =
-    api.storage.fetchSamples.useQuery();
+  const {
+    data: samples,
+    isLoading,
+    error,
+  } = api.storage.fetchSamples.useQuery();
 
-  if (isLoadingSamples) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-4">
         <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center py-4 text-red-500">
+        Error fetching samples: {error.message}
       </div>
     );
   }
