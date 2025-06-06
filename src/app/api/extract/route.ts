@@ -1,45 +1,21 @@
-import { bankStatementSchema } from '@/lib/schemas';
-import { google } from '@ai-sdk/google';
-import { streamObject } from 'ai';
+import { extractBankStatement } from '@/lib/stream-bank-statement';
 
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { files } = await req.json(); 
-  const firstFile = files[0].data;
+  interface RequestBody {
+    file: { data: string; mimeType: string };
+  }
+  const { file } = (await req.json()) as RequestBody;
 
-  const result = streamObject({
-    model: google('gemini-2.5-flash-preview-05-20'),
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are a bank statement extractor. Your job is to take a document, and extract the bank statement from the document.',
-      },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Extract the bank statement from the document.',
-          },
-          {
-            type: 'file',
-            data: firstFile,
-            mimeType: 'application/pdf',
-          },
-        ],
-      },
-    ],
-    schema: bankStatementSchema,
+  if (!file) {
+    return new Response(JSON.stringify({ error: 'No file provided.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
-    onFinish: ({ object }) => {
-      console.log(object);
-    },
-    onError: (error) => {
-      console.error(error);
-    },
-  });
+  const result = await extractBankStatement(file.data, file.mimeType);
 
   return result.toTextStreamResponse();
 }

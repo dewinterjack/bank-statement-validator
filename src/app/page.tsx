@@ -23,22 +23,27 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { bankStatementSchema, type BankStatement } from '@/lib/schemas';
+import { api } from '@/trpc/react';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedSample, setSelectedSample] = useState<string | null>(null);
 
   const [displayedBankStatement, setDisplayedBankStatement] =
     useState<BankStatement | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
+  const { data, isLoading: isLoadingSamples } =
+    api.storage.fetchSamples.useQuery();
+
   const {
     object: streamedObject,
     submit,
     isLoading,
-    error: hookError,
+    error: streamError,
   } = useObject({
-    api: '/api/extract',
+    api: selectedSample ? '/api/extract-sample' : '/api/extract',
     schema: bankStatementSchema,
   });
 
@@ -50,21 +55,29 @@ export default function BankStatementAnalyzer() {
   }, [streamedObject]);
 
   useEffect(() => {
-    if (hookError) {
+    if (streamError) {
       setSubmissionError(
-        hookError.message ||
+        streamError.message ||
           'An error occurred while processing the statement.',
       );
       setDisplayedBankStatement(null);
     }
-  }, [hookError]);
+  }, [streamError]);
 
   const commonSetFile = (newFile: File | null) => {
     setFile(newFile);
+    setSelectedSample(null);
     if (newFile) {
       setDisplayedBankStatement(null);
       setSubmissionError(null);
     }
+  };
+
+  const handleSampleSelect = (sampleKey: string) => {
+    setSelectedSample(sampleKey);
+    setFile(null);
+    setDisplayedBankStatement(null);
+    setSubmissionError(null);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -105,7 +118,7 @@ export default function BankStatementAnalyzer() {
         reader.onload = async () => {
           try {
             const base64Data = (reader.result as string).split(',')[1];
-            submit({ files: [{ data: base64Data }] });
+            submit({ file: { data: base64Data, mimeType: file.type } });
           } catch (err) {
             console.error('Error submitting to API:', err);
             setSubmissionError(
@@ -128,11 +141,27 @@ export default function BankStatementAnalyzer() {
             : 'Error preparing file for submission.',
         );
       }
+    } else if (selectedSample) {
+      setDisplayedBankStatement(null);
+      setSubmissionError(null);
+      try {
+        submit({ sampleKey: selectedSample });
+      } catch (err) {
+        console.error('Error submitting sample to API:', err);
+        setSubmissionError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to submit sample for analysis.',
+        );
+      }
     }
   };
 
   const handleReset = () => {
     commonSetFile(null);
+    setSelectedSample(null);
+    setDisplayedBankStatement(null);
+    setSubmissionError(null);
   };
 
   const formatCurrency = (amount: number) => {
@@ -214,21 +243,81 @@ export default function BankStatementAnalyzer() {
                 </div>
               </div>
 
-              {file && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Separator className="flex-1" />
+                  <span className="text-sm text-gray-500">or try a sample</span>
+                  <Separator className="flex-1" />
+                </div>
+
+                {isLoadingSamples ? (
+                  <div className="flex justify-center py-4">
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                  </div>
+                ) : data && data.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {data
+                      .filter((item) => item.Key?.endsWith('.pdf'))
+                      .map((sample) => (
+                        <Button
+                          key={sample.Key}
+                          variant={
+                            selectedSample === sample.Key
+                              ? 'default'
+                              : 'outline'
+                          }
+                          size="sm"
+                          onClick={() => handleSampleSelect(sample.Key!)}
+                          className="text-xs"
+                        >
+                          <FileText className="mr-1 h-3 w-3" />
+                          {sample.Key?.replace('.pdf', '').replace(
+                            /[-_]/g,
+                            ' ',
+                          )}
+                        </Button>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-sm text-gray-500">
+                    No sample files available
+                  </p>
+                )}
+              </div>
+
+              {file || selectedSample ? (
                 <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
                   <div className="flex items-center gap-3">
                     <FileText className="h-8 w-8 text-red-600" />
                     <div>
-                      <p className="font-medium text-gray-900">{file.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
+                      {file ? (
+                        <>
+                          <p className="font-medium text-gray-900">
+                            {file.name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-medium text-gray-900">
+                            {selectedSample
+                              ?.replace('.pdf', '')
+                              .replace(/[-_]/g, ' ')}
+                          </p>
+                          <p className="text-sm text-gray-500">Sample PDF</p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => commonSetFile(null)}
+                      onClick={() => {
+                        commonSetFile(null);
+                        setSelectedSample(null);
+                      }}
                     >
                       Remove
                     </Button>
@@ -237,7 +326,7 @@ export default function BankStatementAnalyzer() {
                     </Button>
                   </div>
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
         )}
@@ -416,7 +505,7 @@ export default function BankStatementAnalyzer() {
                 <div className="space-y-2">
                   {displayedBankStatement.transactions.map((transaction) => (
                     <div
-                      key={transaction.date}
+                      key={`${transaction.date}-${transaction.description}-${transaction.amount}`}
                       className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50"
                     >
                       <div className="flex-1">
