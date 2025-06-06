@@ -22,14 +22,14 @@ export const SampleSelector: React.FC<SampleSelectorProps> = ({
   if (isLoading) {
     return (
       <div className="flex justify-center py-4">
-        <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+        <div className="border-primary h-4 w-4 animate-spin rounded-full border-b-2"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center py-4 text-red-500">
+      <div className="text-destructive flex justify-center py-4">
         Error fetching samples: {error.message}
       </div>
     );
@@ -39,7 +39,7 @@ export const SampleSelector: React.FC<SampleSelectorProps> = ({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Separator className="flex-1" />
-        <span className="text-sm text-gray-500">or try a sample</span>
+        <span className="text-muted-foreground text-sm">or try a sample</span>
         <Separator className="flex-1" />
       </div>
 
@@ -61,7 +61,7 @@ export const SampleSelector: React.FC<SampleSelectorProps> = ({
             ))}
         </div>
       ) : (
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-muted-foreground text-center text-sm">
           No sample files available
         </p>
       )}

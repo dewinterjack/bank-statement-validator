@@ -4,6 +4,7 @@ import { type Metadata } from 'next';
 import { Geist } from 'next/font/google';
 
 import { TRPCReactProvider } from '@/trpc/react';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'Create T3 App',
@@ -20,7 +21,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable}`}>
+    <html
+      lang="en"
+      className={cn(geist.variable, 'dark font-sans antialiased')}
+    >
       <body>
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>

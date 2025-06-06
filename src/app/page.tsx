@@ -10,7 +10,6 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -214,15 +213,15 @@ export default function BankStatementAnalyzer() {
   const currentLoading = isLoading || isLoadingStatement;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="bg-background min-h-screen p-4">
       <div className="mx-auto max-w-6xl">
         {submissionError && (
-          <Card className="mx-auto mb-4 max-w-2xl border border-red-500 bg-red-50">
+          <Card className="border-destructive bg-destructive/10 mx-auto mb-4 max-w-2xl border">
             <CardHeader>
-              <CardTitle className="text-red-700">Analysis Error</CardTitle>
+              <CardTitle className="text-destructive">Analysis Error</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-red-600">{submissionError}</p>
+              <p className="text-destructive">{submissionError}</p>
               <Button
                 variant="outline"
                 onClick={() => setSubmissionError(null)}
@@ -251,19 +250,19 @@ export default function BankStatementAnalyzer() {
                 <div
                   className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
                     dragActive
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-input hover:border-primary'
                   }`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
                   onDragOver={handleDrag}
                   onDrop={handleDrop}
                 >
-                  <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                  <Upload className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
                   <div className="space-y-2">
-                    <p className="text-lg font-medium text-gray-700">
+                    <p className="text-foreground text-lg font-medium">
                       Drop your PDF file here, or{' '}
-                      <label className="cursor-pointer text-blue-600 underline hover:text-blue-700">
+                      <label className="text-primary hover:text-primary/80 cursor-pointer underline">
                         browse
                         <input
                           type="file"
@@ -273,7 +272,7 @@ export default function BankStatementAnalyzer() {
                         />
                       </label>
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-muted-foreground text-sm">
                       PDF files only, up to 10MB
                     </p>
                   </div>
@@ -285,27 +284,29 @@ export default function BankStatementAnalyzer() {
                 />
 
                 {file || selectedSample ? (
-                  <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+                  <div className="bg-muted flex items-center justify-between rounded-lg p-4">
                     <div className="flex items-center gap-3">
-                      <FileText className="h-8 w-8 text-red-600" />
+                      <FileText className="text-destructive h-8 w-8" />
                       <div>
                         {file ? (
                           <>
-                            <p className="font-medium text-gray-900">
+                            <p className="text-foreground font-medium">
                               {file.name}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-muted-foreground text-sm">
                               {(file.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                           </>
                         ) : (
                           <>
-                            <p className="font-medium text-gray-900">
+                            <p className="text-foreground font-medium">
                               {selectedSample
                                 ?.replace('.pdf', '')
                                 .replace(/[-_]/g, ' ')}
                             </p>
-                            <p className="text-sm text-gray-500">Sample PDF</p>
+                            <p className="text-muted-foreground text-sm">
+                              Sample PDF
+                            </p>
                           </>
                         )}
                       </div>
@@ -337,17 +338,12 @@ export default function BankStatementAnalyzer() {
           <Card className="mx-auto max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                <div className="border-primary h-5 w-5 animate-spin rounded-full border-b-2"></div>
                 {isLoading ? 'Processing Bank Statement' : 'Loading Statement'}
               </CardTitle>
-              <CardDescription>
-                {isLoading
-                  ? 'Analyzing your PDF and extracting financial data. Please wait...'
-                  : 'Fetching your statement from the database. Please wait...'}
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 py-10 text-center">
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {isLoading
                   ? 'Extracting information from your document...'
                   : 'Loading...'}
@@ -359,7 +355,7 @@ export default function BankStatementAnalyzer() {
         {displayedBankStatement && !currentLoading && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-foreground text-2xl font-bold">
                 Analysis Results
               </h2>
               <Button variant="outline" onClick={handleReset}>
@@ -380,7 +376,7 @@ export default function BankStatementAnalyzer() {
                     <p className="text-lg font-semibold">
                       {displayedBankStatement.accountHolder.name}
                     </p>
-                    <div className="mt-1 text-sm text-gray-600">
+                    <div className="text-muted-foreground mt-1 text-sm">
                       {displayedBankStatement.accountHolder.address.map(
                         (line, index) => (
                           <p key={index}>{line}</p>
@@ -417,7 +413,7 @@ export default function BankStatementAnalyzer() {
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-muted-foreground text-sm">
                         Starting Balance
                       </span>
                       <span className="font-semibold">
@@ -425,7 +421,7 @@ export default function BankStatementAnalyzer() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-muted-foreground text-sm">
                         Ending Balance
                       </span>
                       <span className="font-semibold">
@@ -434,20 +430,22 @@ export default function BankStatementAnalyzer() {
                     </div>
                     <Separator />
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Net Change</span>
+                      <span className="text-muted-foreground text-sm">
+                        Net Change
+                      </span>
                       <div className="flex items-center gap-1">
                         {displayedBankStatement.endingBalance >
                         displayedBankStatement.startingBalance ? (
-                          <TrendingUp className="h-4 w-4 text-green-600" />
+                          <TrendingUp className="text-primary h-4 w-4" />
                         ) : (
-                          <TrendingDown className="h-4 w-4 text-red-600" />
+                          <TrendingDown className="text-destructive h-4 w-4" />
                         )}
                         <span
                           className={`font-semibold ${
                             displayedBankStatement.endingBalance >
                             displayedBankStatement.startingBalance
-                              ? 'text-green-600'
-                              : 'text-red-600'
+                              ? 'text-primary'
+                              : 'text-destructive'
                           }`}
                         >
                           {formatCurrency(
@@ -468,7 +466,7 @@ export default function BankStatementAnalyzer() {
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-muted-foreground text-sm">
                         Total Transactions
                       </span>
                       <span className="font-semibold">
@@ -476,8 +474,10 @@ export default function BankStatementAnalyzer() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Credits</span>
-                      <span className="font-semibold text-green-600">
+                      <span className="text-muted-foreground text-sm">
+                        Credits
+                      </span>
+                      <span className="text-primary font-semibold">
                         {
                           displayedBankStatement.transactions.filter(
                             (t) => t.type === 'credit',
@@ -486,8 +486,10 @@ export default function BankStatementAnalyzer() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Debits</span>
-                      <span className="font-semibold text-red-600">
+                      <span className="text-muted-foreground text-sm">
+                        Debits
+                      </span>
+                      <span className="text-destructive font-semibold">
                         {
                           displayedBankStatement.transactions.filter(
                             (t) => t.type === 'debit',
@@ -512,7 +514,7 @@ export default function BankStatementAnalyzer() {
                   {displayedBankStatement.transactions.map((transaction) => (
                     <div
                       key={`${transaction.date}-${transaction.description}-${transaction.amount}`}
-                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50"
+                      className="border-border hover:bg-muted flex items-center justify-between rounded-lg border p-4 transition-colors"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
@@ -529,7 +531,7 @@ export default function BankStatementAnalyzer() {
                             {transaction.description}
                           </span>
                         </div>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="text-muted-foreground mt-1 text-sm">
                           {formatDate(transaction.date)}
                         </p>
                       </div>
@@ -537,14 +539,14 @@ export default function BankStatementAnalyzer() {
                         <p
                           className={`font-semibold ${
                             transaction.type === 'credit'
-                              ? 'text-green-600'
-                              : 'text-red-600'
+                              ? 'text-primary'
+                              : 'text-destructive'
                           }`}
                         >
                           {transaction.type === 'credit' ? '+' : '-'}
                           {formatCurrency(transaction.amount)}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-muted-foreground text-sm">
                           Balance: {formatCurrency(transaction.balance)}
                         </p>
                       </div>
