@@ -10,6 +10,7 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,11 +25,16 @@ import { Separator } from '@/components/ui/separator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { bankStatementSchema, type BankStatement } from '@/lib/schemas';
 import { SampleSelector } from './_components/sample-selector';
+import { StatementHistory } from './_components/statement-history';
+import { api } from '@/trpc/react';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedSample, setSelectedSample] = useState<string | null>(null);
+  const [selectedStatementId, setSelectedStatementId] = useState<string | null>(
+    null,
+  );
 
   const [displayedBankStatement, setDisplayedBankStatement] =
     useState<BankStatement | null>(null);
@@ -44,6 +50,17 @@ export default function BankStatementAnalyzer() {
     schema: bankStatementSchema,
   });
 
+  const {
+    data: selectedStatement,
+    isLoading: isLoadingStatement,
+    error: statementError,
+  } = api.statement.getById.useQuery(
+    { id: selectedStatementId! },
+    {
+      enabled: !!selectedStatementId,
+    },
+  );
+
   useEffect(() => {
     if (streamedObject) {
       setDisplayedBankStatement(streamedObject as BankStatement);
@@ -52,18 +69,26 @@ export default function BankStatementAnalyzer() {
   }, [streamedObject]);
 
   useEffect(() => {
-    if (streamError) {
+    if (selectedStatement) {
+      setDisplayedBankStatement(selectedStatement as BankStatement);
+      setSelectedStatementId(null);
+    }
+  }, [selectedStatement]);
+
+  useEffect(() => {
+    const err = streamError ?? statementError;
+    if (err) {
       setSubmissionError(
-        streamError.message ||
-          'An error occurred while processing the statement.',
+        err.message ?? 'An error occurred while processing the statement.',
       );
       setDisplayedBankStatement(null);
     }
-  }, [streamError]);
+  }, [streamError, statementError]);
 
   const commonSetFile = (newFile: File | null) => {
     setFile(newFile);
     setSelectedSample(null);
+    setSelectedStatementId(null);
     if (newFile) {
       setDisplayedBankStatement(null);
       setSubmissionError(null);
@@ -73,8 +98,17 @@ export default function BankStatementAnalyzer() {
   const handleSampleSelect = (sampleKey: string) => {
     setSelectedSample(sampleKey);
     setFile(null);
+    setSelectedStatementId(null);
     setDisplayedBankStatement(null);
     setSubmissionError(null);
+  };
+
+  const handleSelectStatement = (id: string) => {
+    setFile(null);
+    setSelectedSample(null);
+    setDisplayedBankStatement(null);
+    setSubmissionError(null);
+    setSelectedStatementId(id);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -159,6 +193,7 @@ export default function BankStatementAnalyzer() {
     setSelectedSample(null);
     setDisplayedBankStatement(null);
     setSubmissionError(null);
+    setSelectedStatementId(null);
   };
 
   const formatCurrency = (amount: number) => {
@@ -175,6 +210,8 @@ export default function BankStatementAnalyzer() {
       day: 'numeric',
     });
   };
+
+  const currentLoading = isLoading || isLoadingStatement;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -197,120 +234,129 @@ export default function BankStatementAnalyzer() {
           </Card>
         )}
 
-        {!displayedBankStatement && !isLoading && (
-          <Card className="mx-auto max-w-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Upload Bank Statement
-              </CardTitle>
-              <CardDescription>
-                Select or drag and drop a PDF bank statement to begin analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div
-                className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-                  dragActive
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                <div className="space-y-2">
-                  <p className="text-lg font-medium text-gray-700">
-                    Drop your PDF file here, or{' '}
-                    <label className="cursor-pointer text-blue-600 underline hover:text-blue-700">
-                      browse
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                    </label>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    PDF files only, up to 10MB
-                  </p>
+        {!displayedBankStatement && !currentLoading && (
+          <div className="space-y-8">
+            <Card className="mx-auto max-w-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Bank Statement Analyzer
+                </CardTitle>
+                <CardDescription>
+                  Upload a PDF bank statement to extract and analyze financial
+                  data
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div
+                  className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+                    dragActive
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                >
+                  <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                  <div className="space-y-2">
+                    <p className="text-lg font-medium text-gray-700">
+                      Drop your PDF file here, or{' '}
+                      <label className="cursor-pointer text-blue-600 underline hover:text-blue-700">
+                        browse
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      PDF files only, up to 10MB
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <SampleSelector
-                selectedSample={selectedSample}
-                onSampleSelect={handleSampleSelect}
-              />
+                <SampleSelector
+                  selectedSample={selectedSample}
+                  onSampleSelect={handleSampleSelect}
+                />
 
-              {file || selectedSample ? (
-                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-red-600" />
-                    <div>
-                      {file ? (
-                        <>
-                          <p className="font-medium text-gray-900">
-                            {file.name}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="font-medium text-gray-900">
-                            {selectedSample
-                              ?.replace('.pdf', '')
-                              .replace(/[-_]/g, ' ')}
-                          </p>
-                          <p className="text-sm text-gray-500">Sample PDF</p>
-                        </>
-                      )}
+                {file || selectedSample ? (
+                  <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-8 w-8 text-red-600" />
+                      <div>
+                        {file ? (
+                          <>
+                            <p className="font-medium text-gray-900">
+                              {file.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="font-medium text-gray-900">
+                              {selectedSample
+                                ?.replace('.pdf', '')
+                                .replace(/[-_]/g, ' ')}
+                            </p>
+                            <p className="text-sm text-gray-500">Sample PDF</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          commonSetFile(null);
+                          setSelectedSample(null);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                      <Button onClick={handleAnalyze} disabled={isLoading}>
+                        {isLoading ? 'Analyzing...' : 'Analyze Statement'}
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        commonSetFile(null);
-                        setSelectedSample(null);
-                      }}
-                    >
-                      Remove
-                    </Button>
-                    <Button onClick={handleAnalyze} disabled={isLoading}>
-                      {isLoading ? 'Analyzing...' : 'Analyze Statement'}
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
+                ) : null}
+              </CardContent>
+            </Card>
+
+            <StatementHistory onSelectStatement={handleSelectStatement} />
+          </div>
         )}
 
-        {isLoading && (
+        {currentLoading && (
           <Card className="mx-auto max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                Processing Bank Statement
+                {isLoading ? 'Processing Bank Statement' : 'Loading Statement'}
               </CardTitle>
               <CardDescription>
-                Analyzing your PDF and extracting financial data. Please wait...
+                {isLoading
+                  ? 'Analyzing your PDF and extracting financial data. Please wait...'
+                  : 'Fetching your statement from the database. Please wait...'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 py-10 text-center">
               <p className="text-gray-600">
-                Extracting information from your document...
+                {isLoading
+                  ? 'Extracting information from your document...'
+                  : 'Loading...'}
               </p>
             </CardContent>
           </Card>
         )}
 
-        {displayedBankStatement && !isLoading && (
+        {displayedBankStatement && !currentLoading && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">

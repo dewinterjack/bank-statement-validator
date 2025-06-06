@@ -10,11 +10,36 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model BankStatement {
+    id                   String        @id @default(uuid())
+    accountHolderName    String
+    accountHolderAddress String[]
+    documentDate         DateTime
+    accountNumber        String
+    startingBalance      Float
+    endingBalance        Float
+    s3Key                String
+    transactions         Transaction[]
+    createdAt            DateTime      @default(now())
+    updatedAt            DateTime      @updatedAt
 
-    @@index([name])
+    @@unique([documentDate, accountNumber])
+}
+
+model Transaction {
+    id              String          @id @default(uuid())
+    date            DateTime
+    description     String
+    amount          Float
+    balance         Float
+    type            TransactionType
+    bankStatementId String
+    bankStatement   BankStatement   @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+    createdAt       DateTime        @default(now())
+    updatedAt       DateTime        @updatedAt
+}
+
+enum TransactionType {
+    credit
+    debit
 }

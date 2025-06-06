@@ -1,10 +1,16 @@
 import { bankStatementSchema } from '@/lib/schemas';
 import { google } from '@ai-sdk/google';
 import { streamObject } from 'ai';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function extractBankStatement(
   fileData: string,
   fileMimeType: string,
+  options?: {
+    s3Key?: string,
+  },
 ) {
   return streamObject({
     model: google('gemini-2.5-flash-preview-05-20'),
@@ -26,8 +32,42 @@ export async function extractBankStatement(
       },
     ],
     schema: bankStatementSchema,
-    onFinish: ({ object }) => {
-      console.log(object);
+    onFinish: async ({ object }) => {
+      if(!options?.s3Key) {
+        console.log('No s3Key provided, skipping DB save');
+        const parsedObject = bankStatementSchema.safeParse(object);
+        if(!parsedObject.success) {
+          console.error('Error parsing bank statement:', parsedObject.error);
+          throw new Error('Error parsing bank statement');
+        }
+        return;
+      }
+      const parsedObject = bankStatementSchema.parse(object);
+      
+      try {
+        await prisma.bankStatement.create({
+          data: {
+            accountHolderName: parsedObject.accountHolder.name,
+            accountHolderAddress: parsedObject.accountHolder.address,
+            documentDate: new Date(parsedObject.documentDate),
+            accountNumber: parsedObject.accountNumber,
+            startingBalance: parsedObject.startingBalance,
+            endingBalance: parsedObject.endingBalance,
+            s3Key: options.s3Key,
+            transactions: {
+              create: parsedObject.transactions.map((transaction) => ({
+                date: new Date(transaction.date),
+                description: transaction.description,
+                amount: transaction.amount,
+                balance: transaction.balance,
+                type: transaction.type,
+              })),
+            },
+          },
+        });
+      } catch (error) {
+        console.error('Error saving bank statement to DB:', error);
+      }
     },
     onError: (error) => {
       console.error(error);
