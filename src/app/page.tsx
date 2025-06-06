@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { bankStatementSchema, type BankStatement } from '@/lib/schemas';
-import { api } from '@/trpc/react';
+import { SampleSelector } from './_components/sample-selector';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
@@ -33,9 +33,6 @@ export default function BankStatementAnalyzer() {
   const [displayedBankStatement, setDisplayedBankStatement] =
     useState<BankStatement | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-
-  const { data, isLoading: isLoadingSamples } =
-    api.storage.fetchSamples.useQuery();
 
   const {
     object: streamedObject,
@@ -243,47 +240,10 @@ export default function BankStatementAnalyzer() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Separator className="flex-1" />
-                  <span className="text-sm text-gray-500">or try a sample</span>
-                  <Separator className="flex-1" />
-                </div>
-
-                {isLoadingSamples ? (
-                  <div className="flex justify-center py-4">
-                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  </div>
-                ) : data && data.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {data
-                      .filter((item) => item.Key?.endsWith('.pdf'))
-                      .map((sample) => (
-                        <Button
-                          key={sample.Key}
-                          variant={
-                            selectedSample === sample.Key
-                              ? 'default'
-                              : 'outline'
-                          }
-                          size="sm"
-                          onClick={() => handleSampleSelect(sample.Key!)}
-                          className="text-xs"
-                        >
-                          <FileText className="mr-1 h-3 w-3" />
-                          {sample.Key?.replace('.pdf', '').replace(
-                            /[-_]/g,
-                            ' ',
-                          )}
-                        </Button>
-                      ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-sm text-gray-500">
-                    No sample files available
-                  </p>
-                )}
-              </div>
+              <SampleSelector
+                selectedSample={selectedSample}
+                onSampleSelect={handleSampleSelect}
+              />
 
               {file || selectedSample ? (
                 <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
