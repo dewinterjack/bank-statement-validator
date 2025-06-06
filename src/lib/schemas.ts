@@ -1,0 +1,25 @@
+import { z } from 'zod';
+
+export const transactionSchema = z.object({
+  date: z.string().datetime(),
+  description: z.string(),
+  amount: z.number(),
+  balance: z.number(),
+  type: z.enum(['credit', 'debit']),
+});
+
+export type Transaction = z.infer<typeof transactionSchema>;
+
+export const bankStatementSchema = z.object({
+  accountHolder: z.object({
+    name: z.string(),
+    address: z.array(z.string()),
+  }),
+  documentDate: z.string().datetime(),
+  accountNumber: z.string(),
+  startingBalance: z.number(),
+  endingBalance: z.number(),
+  transactions: z.array(transactionSchema),
+});
+
+export type BankStatement = z.infer<typeof bankStatementSchema>;
