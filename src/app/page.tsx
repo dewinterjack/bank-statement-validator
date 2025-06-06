@@ -215,7 +215,7 @@ export default function BankStatementAnalyzer() {
 
     for (let i = 0; i < steps.length; i++) {
       await new Promise((resolve) =>
-        setTimeout(resolve, steps[i]?.duration ?? 0)
+        setTimeout(resolve, steps[i]?.duration ?? 0),
       );
       setProgress(((i + 1) / steps.length) * 100);
     }
@@ -254,9 +254,9 @@ export default function BankStatementAnalyzer() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="mx-auto max-w-6xl">
         {!results && !isProcessing && (
-          <Card className="max-w-2xl mx-auto">
+          <Card className="mx-auto max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -268,7 +268,7 @@ export default function BankStatementAnalyzer() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
                   dragActive
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-300 hover:border-gray-400'
@@ -278,11 +278,11 @@ export default function BankStatementAnalyzer() {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                 <div className="space-y-2">
                   <p className="text-lg font-medium text-gray-700">
                     Drop your PDF file here, or{' '}
-                    <label className="text-blue-600 hover:text-blue-700 cursor-pointer underline">
+                    <label className="cursor-pointer text-blue-600 underline hover:text-blue-700">
                       browse
                       <input
                         type="file"
@@ -299,7 +299,7 @@ export default function BankStatementAnalyzer() {
               </div>
 
               {file && (
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
                   <div className="flex items-center gap-3">
                     <FileText className="h-8 w-8 text-red-600" />
                     <div>
@@ -322,10 +322,10 @@ export default function BankStatementAnalyzer() {
         )}
 
         {isProcessing && (
-          <Card className="max-w-2xl mx-auto">
+          <Card className="mx-auto max-w-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-600"></div>
                 Processing Bank Statement
               </CardTitle>
               <CardDescription>
@@ -350,10 +350,10 @@ export default function BankStatementAnalyzer() {
                 ].map((step, index) => (
                   <div
                     key={step}
-                    className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center gap-2 rounded-lg bg-gray-50 p-3"
                   >
                     <div
-                      className={`w-2 h-2 rounded-full ${
+                      className={`h-2 w-2 rounded-full ${
                         progress > (index + 1) * 25
                           ? 'bg-green-500'
                           : 'bg-gray-300'
@@ -378,7 +378,7 @@ export default function BankStatementAnalyzer() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -388,10 +388,10 @@ export default function BankStatementAnalyzer() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="font-semibold text-lg">
+                    <p className="text-lg font-semibold">
                       {results.accountHolder.name}
                     </p>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="mt-1 text-sm text-gray-600">
                       {results.accountHolder.address.map((line, index) => (
                         <p key={index}>{line}</p>
                       ))}
@@ -420,7 +420,7 @@ export default function BankStatementAnalyzer() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
                         Starting Balance
                       </span>
@@ -428,7 +428,7 @@ export default function BankStatementAnalyzer() {
                         {formatCurrency(results.startingBalance)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
                         Ending Balance
                       </span>
@@ -437,7 +437,7 @@ export default function BankStatementAnalyzer() {
                       </span>
                     </div>
                     <Separator />
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Net Change</span>
                       <div className="flex items-center gap-1">
                         {results.endingBalance > results.startingBalance ? (
@@ -453,7 +453,7 @@ export default function BankStatementAnalyzer() {
                           }`}
                         >
                           {formatCurrency(
-                            results.endingBalance - results.startingBalance
+                            results.endingBalance - results.startingBalance,
                           )}
                         </span>
                       </div>
@@ -468,7 +468,7 @@ export default function BankStatementAnalyzer() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">
                         Total Transactions
                       </span>
@@ -476,17 +476,17 @@ export default function BankStatementAnalyzer() {
                         {results.transactions.length}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Credits</span>
                       <span className="font-semibold text-green-600">
                         {
                           results.transactions.filter(
-                            (t) => t.type === 'credit'
+                            (t) => t.type === 'credit',
                           ).length
                         }
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Debits</span>
                       <span className="font-semibold text-red-600">
                         {
@@ -512,7 +512,7 @@ export default function BankStatementAnalyzer() {
                   {results.transactions.map((transaction) => (
                     <div
                       key={transaction.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
@@ -529,7 +529,7 @@ export default function BankStatementAnalyzer() {
                             {transaction.description}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="mt-1 text-sm text-gray-500">
                           {formatDate(transaction.date)}
                         </p>
                       </div>
