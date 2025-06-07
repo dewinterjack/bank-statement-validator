@@ -31,3 +31,20 @@ export const bankStatementSchema = z.object({
 
 export type BankStatement = z.infer<typeof bankStatementSchema>;
 export type PartialBankStatement = DeepPartial<BankStatement>;
+
+export const documentTypeSchema = z.object({
+  isBankStatement: z
+    .boolean()
+    .describe('Whether the document is a bank statement'),
+  confidence: z.number().min(0).max(1).describe('Confidence level from 0 to 1'),
+  documentType: z
+    .string()
+    .describe(
+      'The type of document detected (e.g., "bank statement", "invoice", "receipt", "other")',
+    ),
+  reasoning: z
+    .string()
+    .describe('Brief explanation of why this classification was made'),
+});
+
+export type DocumentType = z.infer<typeof documentTypeSchema>;
