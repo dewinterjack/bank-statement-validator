@@ -4,6 +4,8 @@ import { BankStatement } from '@/app/_components/bank-statement';
 import { ValidationResults } from '@/app/_components/validation-results';
 import type { validateBankStatementTask } from '@/trigger/validate-bank-statement';
 import { useRealtimeRun } from '@trigger.dev/react-hooks';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export function ScanDetails({ id }: { id: string }) {
   const { run, error } = useRealtimeRun<typeof validateBankStatementTask>(id);
@@ -25,6 +27,11 @@ export function ScanDetails({ id }: { id: string }) {
 
   return (
     <div className="space-y-8">
+      <div className="flex justify-center pt-4">
+        <Button asChild>
+          <Link href="/">Analyse another document</Link>
+        </Button>
+      </div>
       <ValidationResults validations={run?.output?.validations ?? []} />
 
       {run?.output?.bankStatement && (
