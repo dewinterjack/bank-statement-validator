@@ -14,7 +14,8 @@ model BankStatement {
     id                   String        @id @default(uuid())
     accountHolderName    String
     accountHolderAddress String[]
-    documentDate         DateTime
+    startDate            DateTime
+    endDate              DateTime
     accountNumber        String
     startingBalance      Float
     endingBalance        Float
@@ -24,7 +25,7 @@ model BankStatement {
     createdAt            DateTime      @default(now())
     updatedAt            DateTime      @updatedAt
 
-    @@unique([documentDate, accountNumber])
+    @@unique([startDate, endDate, accountNumber])
 }
 
 model Transaction {

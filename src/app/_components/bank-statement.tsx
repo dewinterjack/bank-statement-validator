@@ -70,9 +70,14 @@ export function BankStatement({
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  Statement Date:{' '}
-                  {displayedBankStatement.documentDate &&
-                    formatDate(displayedBankStatement.documentDate)}
+                  Start Date:{' '}
+                  {displayedBankStatement.startDate &&
+                    formatDate(displayedBankStatement.startDate)}
+                </span>
+                <span>
+                  End Date:{' '}
+                  {displayedBankStatement.endDate &&
+                    formatDate(displayedBankStatement.endDate)}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">

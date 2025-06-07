@@ -55,7 +55,7 @@ export function StatementHistory({ onSelectStatement }: StatementHistoryProps) {
                 <div className="mb-2 flex items-center gap-2">
                   <Calendar className="text-muted-foreground h-3.5 w-3.5" />
                   <span className="text-foreground text-sm font-medium">
-                    {formatDate(statement.documentDate)}
+                    {formatDate(statement.startDate)}
                   </span>
                 </div>
                 <div className="space-y-1">

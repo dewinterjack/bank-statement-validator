@@ -4,10 +4,10 @@ import { z } from 'zod';
 export const statementRouter = createTRPCRouter({
   getAllPreviews: publicProcedure.query(async ({ ctx }) => {
     const statements = await ctx.db.bankStatement.findMany({
-      orderBy: { documentDate: 'desc' },
+      orderBy: { startDate: 'desc' },
       select: {
         id: true,
-        documentDate: true,
+        startDate: true,
         accountNumber: true,
         accountHolderName: true,
       },
@@ -21,7 +21,6 @@ export const statementRouter = createTRPCRouter({
       const statement = await ctx.db.bankStatement.findUnique({
         where: { id: input.id },
         include: {
-            
           transactions: {
             orderBy: {
               date: 'asc',
@@ -36,7 +35,8 @@ export const statementRouter = createTRPCRouter({
 
       return {
         id: statement.id,
-        documentDate: statement.documentDate.toISOString(),
+        startDate: statement.startDate.toISOString(),
+        endDate: statement.endDate.toISOString(),
         accountNumber: statement.accountNumber,
         startingBalance: statement.startingBalance,
         endingBalance: statement.endingBalance,

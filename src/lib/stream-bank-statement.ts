@@ -49,7 +49,8 @@ export async function extractBankStatement(
           data: {
             accountHolderName: parsedObject.accountHolder.name,
             accountHolderAddress: parsedObject.accountHolder.address,
-            documentDate: new Date(parsedObject.documentDate),
+            startDate: new Date(parsedObject.startDate),
+            endDate: new Date(parsedObject.endDate),
             accountNumber: parsedObject.accountNumber,
             startingBalance: parsedObject.startingBalance,
             endingBalance: parsedObject.endingBalance,
