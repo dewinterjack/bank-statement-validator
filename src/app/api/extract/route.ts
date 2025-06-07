@@ -1,6 +1,5 @@
-import { extractBankStatement } from '@/lib/stream-bank-statement';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { s3Client } from '@/lib/s3-client';
+import { inngest } from '@/lib/inngest/client';
+import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
 export const maxDuration = 60;
@@ -20,24 +19,16 @@ export async function POST(req: Request) {
 
   const s3Key = `bank-statements/${uuidv4()}.pdf`;
 
-  try {
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: 'pdfs',
-        Key: s3Key,
-        Body: Buffer.from(file.data, 'base64'),
-        ContentType: file.mimeType,
-      }),
-    );
-  } catch (error) {
-    console.error('Error uploading to S3:', error);
-    return new Response(JSON.stringify({ error: 'Failed to upload file to S3.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  await inngest.send({
+    name: 'scan/pdf.uploaded',
+    data: {
+      file: {
+        data: file.data,
+        mimeType: file.mimeType,
+      },
+      s3Key,
+    },
+  });
 
-  const result = await extractBankStatement(file.data, file.mimeType, { s3Key });
-
-  return result.toTextStreamResponse();
+  return NextResponse.json({ message: 'Event sent!' });
 }
