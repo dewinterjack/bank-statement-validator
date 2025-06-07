@@ -10,6 +10,7 @@ export default async function RunPage({
   const { id } = await params;
   const cookieStore = await cookies();
   const publicAccessToken = cookieStore.get('publicAccessToken');
+  const freshUpload = cookieStore.get('freshUpload');
 
   if (!publicAccessToken) {
     return <div>No public access token found</div>;
@@ -17,7 +18,7 @@ export default async function RunPage({
 
   return (
     <TriggerProvider accessToken={publicAccessToken.value}>
-      <ScanDetails id={id} />
+      <ScanDetails id={id} isOptimisticProcessing={!!freshUpload} />
     </TriggerProvider>
   );
 }

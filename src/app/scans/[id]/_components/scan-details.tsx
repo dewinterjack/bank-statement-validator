@@ -7,7 +7,13 @@ import { useRealtimeRun } from '@trigger.dev/react-hooks';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
-export function ScanDetails({ id }: { id: string }) {
+export function ScanDetails({
+  id,
+  isOptimisticProcessing = false,
+}: {
+  id: string;
+  isOptimisticProcessing?: boolean;
+}) {
   const { run, error } = useRealtimeRun<typeof validateBankStatementTask>(id);
 
   if (error) {
@@ -18,7 +24,7 @@ export function ScanDetails({ id }: { id: string }) {
     );
   }
 
-  if (run?.status === 'EXECUTING') {
+  if ((isOptimisticProcessing && !run) || run?.status === 'EXECUTING') {
     return (
       <div className="container mx-auto max-w-6xl p-4">
         <div className="flex items-center justify-center py-8">

@@ -74,6 +74,7 @@ export default function BankStatementAnalyzer() {
               data: base64Data,
               mimeType: file.type,
             });
+            setIsLoading(false);
           } catch (err) {
             if (err instanceof Error && err.message === 'NEXT_REDIRECT') {
               return;
@@ -84,7 +85,6 @@ export default function BankStatementAnalyzer() {
                 ? err.message
                 : 'Failed to submit for analysis.',
             );
-          } finally {
             setIsLoading(false);
           }
         };

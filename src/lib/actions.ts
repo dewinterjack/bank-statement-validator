@@ -42,6 +42,7 @@ export async function extractBankStatement(fileData: FileData) {
 
   const cookieStore = await cookies();
   cookieStore.set('publicAccessToken', handle.publicAccessToken);
+  cookieStore.set('freshUpload', 'true', { maxAge: 10 });
 
   redirect(`/scans/${handle.id}`);
 }
