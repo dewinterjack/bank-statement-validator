@@ -23,14 +23,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { bankStatementSchema, type BankStatement } from '@/lib/schemas';
-import { SampleSelector } from './_components/sample-selector';
 import { StatementHistory } from './_components/statement-history';
 import { api } from '@/trpc/react';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [selectedSample, setSelectedSample] = useState<string | null>(null);
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(
     null,
   );
@@ -45,7 +43,7 @@ export default function BankStatementAnalyzer() {
     isLoading,
     error: streamError,
   } = useObject({
-    api: selectedSample ? '/api/extract-sample' : '/api/extract',
+    api: '/api/extract',
     schema: bankStatementSchema,
   });
 
@@ -86,7 +84,6 @@ export default function BankStatementAnalyzer() {
 
   const commonSetFile = (newFile: File | null) => {
     setFile(newFile);
-    setSelectedSample(null);
     setSelectedStatementId(null);
     if (newFile) {
       setDisplayedBankStatement(null);
@@ -94,17 +91,8 @@ export default function BankStatementAnalyzer() {
     }
   };
 
-  const handleSampleSelect = (sampleKey: string) => {
-    setSelectedSample(sampleKey);
-    setFile(null);
-    setSelectedStatementId(null);
-    setDisplayedBankStatement(null);
-    setSubmissionError(null);
-  };
-
   const handleSelectStatement = (id: string) => {
     setFile(null);
-    setSelectedSample(null);
     setDisplayedBankStatement(null);
     setSubmissionError(null);
     setSelectedStatementId(id);
@@ -171,25 +159,11 @@ export default function BankStatementAnalyzer() {
             : 'Error preparing file for submission.',
         );
       }
-    } else if (selectedSample) {
-      setDisplayedBankStatement(null);
-      setSubmissionError(null);
-      try {
-        submit({ sampleKey: selectedSample });
-      } catch (err) {
-        console.error('Error submitting sample to API:', err);
-        setSubmissionError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to submit sample for analysis.',
-        );
-      }
     }
   };
 
   const handleReset = () => {
     commonSetFile(null);
-    setSelectedSample(null);
     setDisplayedBankStatement(null);
     setSubmissionError(null);
     setSelectedStatementId(null);
@@ -278,37 +252,19 @@ export default function BankStatementAnalyzer() {
                   </div>
                 </div>
 
-                <SampleSelector
-                  selectedSample={selectedSample}
-                  onSampleSelect={handleSampleSelect}
-                />
-
-                {file || selectedSample ? (
+                {file ? (
                   <div className="bg-muted flex items-center justify-between rounded-lg p-4">
                     <div className="flex items-center gap-3">
                       <FileText className="text-destructive h-8 w-8" />
                       <div>
-                        {file ? (
-                          <>
-                            <p className="text-foreground font-medium">
-                              {file.name}
-                            </p>
-                            <p className="text-muted-foreground text-sm">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-foreground font-medium">
-                              {selectedSample
-                                ?.replace('.pdf', '')
-                                .replace(/[-_]/g, ' ')}
-                            </p>
-                            <p className="text-muted-foreground text-sm">
-                              Sample PDF
-                            </p>
-                          </>
-                        )}
+                        <>
+                          <p className="text-foreground font-medium">
+                            {file.name}
+                          </p>
+                          <p className="text-muted-foreground text-sm">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -316,7 +272,6 @@ export default function BankStatementAnalyzer() {
                         variant="outline"
                         onClick={() => {
                           commonSetFile(null);
-                          setSelectedSample(null);
                         }}
                       >
                         Remove

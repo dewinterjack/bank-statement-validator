@@ -1,6 +1,5 @@
 import { statementRouter } from '@/server/api/routers/statement';
 import { createCallerFactory, createTRPCRouter } from '@/server/api/trpc';
-import { storageRouter } from './routers/storage';
 
 /**
  * This is the primary router for your server.
@@ -9,7 +8,6 @@ import { storageRouter } from './routers/storage';
  */
 export const appRouter = createTRPCRouter({
   statement: statementRouter,
-  storage: storageRouter,
 });
 
 // export type definition of API
