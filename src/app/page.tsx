@@ -75,6 +75,9 @@ export default function BankStatementAnalyzer() {
               mimeType: file.type,
             });
           } catch (err) {
+            if (err instanceof Error && err.message === 'NEXT_REDIRECT') {
+              return;
+            }
             console.error('Error submitting to server action:', err);
             setSubmissionError(
               err instanceof Error
