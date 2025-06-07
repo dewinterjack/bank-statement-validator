@@ -90,7 +90,7 @@ export const validateBankStatementTask = task({
         where: { id: payload.analysisId },
         data: { status: 'FAILED', validations: validations },
       });
-      return { analysisId: payload.analysisId, status: 'FAILED' };
+      return { validations, status: 'FAILED' };
     }
 
     const result = await generateBankStatementObject(
@@ -151,6 +151,7 @@ export const validateBankStatementTask = task({
           ...extractedStatement,
           id: bankStatement.id,
         },
+        status: overallStatus,
       };
     } catch (error) {
       logger.error('Failed to save bank statement to DB', { error });
