@@ -20,7 +20,14 @@ export function Transaction({
         <div className="flex items-center gap-3">
           {transaction.type && (
             <Badge
-              variant={transaction.type === 'credit' ? 'default' : 'secondary'}
+              variant={
+                transaction.type === 'credit' ? 'default' : 'destructive'
+              }
+              className={
+                transaction.type === 'credit'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }
             >
               {transaction.type === 'credit' ? 'Credit' : 'Debit'}
             </Badge>
@@ -34,7 +41,7 @@ export function Transaction({
       <div className="text-right">
         <p
           className={`font-semibold ${
-            transaction.type === 'credit' ? 'text-primary' : 'text-destructive'
+            transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
           }`}
         >
           {transaction.type === 'credit' ? '+' : '-'}
