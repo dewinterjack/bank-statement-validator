@@ -16,6 +16,7 @@ import { bankStatementSchema, type PartialBankStatement } from '@/lib/schemas';
 import { StatementHistory } from './_components/statement-history';
 import { BankStatement } from './_components/bank-statement';
 import { api } from '@/trpc/react';
+import { validateBankStatement } from '@/lib/validators';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
@@ -36,6 +37,15 @@ export default function BankStatementAnalyzer() {
   } = useObject({
     api: '/api/extract',
     schema: bankStatementSchema,
+    onFinish: async ({ object }) => {
+      if (!object) {
+        return;
+      }
+      const validationErrors = validateBankStatement(object);
+      if (validationErrors.length > 0) {
+        setSubmissionError(validationErrors.join('\n'));
+      }
+    },
   });
 
   const {
