@@ -16,6 +16,8 @@ import { bankStatementSchema, type PartialBankStatement } from '@/lib/schemas';
 import { StatementHistory } from './_components/statement-history';
 import { BankStatement } from './_components/bank-statement';
 import { api } from '@/trpc/react';
+import { RealtimeDemo } from './_components/realtime-demo';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,6 +25,7 @@ export default function BankStatementAnalyzer() {
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(
     null,
   );
+  const [runId, setRunId] = useState(uuidv4());
 
   const [displayedBankStatement, setDisplayedBankStatement] =
     useState<PartialBankStatement | null>(null);
@@ -127,7 +130,10 @@ export default function BankStatementAnalyzer() {
         reader.onload = async () => {
           try {
             const base64Data = (reader.result as string).split(',')[1];
-            submit({ file: { data: base64Data, mimeType: file.type } });
+            submit({
+              file: { data: base64Data, mimeType: file.type },
+              runId,
+            });
           } catch (err) {
             console.error('Error submitting to API:', err);
             setSubmissionError(
@@ -158,6 +164,7 @@ export default function BankStatementAnalyzer() {
     setDisplayedBankStatement(null);
     setSubmissionError(null);
     setSelectedStatementId(null);
+    setRunId(uuidv4());
   };
 
   const formatDate = (date: string) => {
@@ -173,6 +180,7 @@ export default function BankStatementAnalyzer() {
   return (
     <div className="bg-background min-h-screen p-4">
       <div className="mx-auto max-w-6xl">
+        <RealtimeDemo runId={runId} reset={handleReset} />
         {submissionError && (
           <Card className="border-destructive bg-destructive/10 mx-auto mb-4 max-w-2xl border">
             <CardHeader>
@@ -291,13 +299,13 @@ export default function BankStatementAnalyzer() {
           </Card>
         )}
 
-        {displayedBankStatement && (
+        {/* {displayedBankStatement && (
           <BankStatement
             displayedBankStatement={displayedBankStatement}
             handleReset={handleReset}
             formatDate={formatDate}
           />
-        )}
+        )} */}
       </div>
     </div>
   );

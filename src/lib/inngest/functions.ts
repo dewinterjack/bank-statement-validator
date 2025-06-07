@@ -4,15 +4,20 @@ import { s3Client } from '@/lib/s3-client';
 import { inngest } from './client';
 import { db } from '@/server/db';
 import { bankStatementSchema, type BankStatement } from '../schemas';
+import { scanRunChannel } from './channels';
 
 export const scanPdf = inngest.createFunction(
   { id: 'scan-pdf' },
   { event: 'scan/pdf.uploaded' },
-  async ({ event, step }) => {
+  async ({ event, step, publish }) => {
     const { data } = event as {
-      data: { s3Key: string; file: { data: string; mimeType: string } };
+      data: {
+        s3Key: string;
+        file: { data: string; mimeType: string };
+        runId: string;
+      };
     };
-    const { s3Key, file } = data;
+    const { s3Key, file, runId } = data;
 
     await step.run('upload-pdf', async () => {
       await s3Client.send(
@@ -33,6 +38,12 @@ export const scanPdf = inngest.createFunction(
           file.mimeType,
         );
         console.log('token usage:', usage);
+        await publish(
+          scanRunChannel(runId).scan({
+            response: result,
+            success: true,
+          }),
+        );
         return { success: true, data: result, usage };
       } catch (error) {
         console.error('Error generating bank statement:', error);

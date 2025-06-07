@@ -7,8 +7,9 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   interface RequestBody {
     file: { data: string; mimeType: string };
+    runId: string;
   }
-  const { file } = (await req.json()) as RequestBody;
+  const { file, runId } = (await req.json()) as RequestBody;
 
   if (!file) {
     return new Response(JSON.stringify({ error: 'No file provided.' }), {
@@ -27,6 +28,7 @@ export async function POST(req: Request) {
         mimeType: file.mimeType,
       },
       s3Key,
+      runId,
     },
   });
 

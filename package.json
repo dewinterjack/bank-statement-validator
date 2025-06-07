@@ -27,6 +27,7 @@
     "@ai-sdk/google": "^1.2.19",
     "@ai-sdk/react": "^1.2.12",
     "@aws-sdk/client-s3": "^3.825.0",
+    "@inngest/realtime": "^0.3.1",
     "@prisma/client": "^6.5.0",
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-separator": "^1.1.7",
