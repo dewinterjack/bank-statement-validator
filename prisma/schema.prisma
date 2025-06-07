@@ -18,6 +18,7 @@ model BankStatement {
     accountNumber        String
     startingBalance      Float
     endingBalance        Float
+    currency             String          @db.VarChar(3)
     s3Key                String
     transactions         Transaction[]
     createdAt            DateTime      @default(now())

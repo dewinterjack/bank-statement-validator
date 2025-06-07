@@ -9,7 +9,7 @@ export async function extractBankStatement(
   fileData: string,
   fileMimeType: string,
   options?: {
-    s3Key?: string,
+    s3Key?: string;
   },
 ) {
   return streamObject({
@@ -33,17 +33,17 @@ export async function extractBankStatement(
     ],
     schema: bankStatementSchema,
     onFinish: async ({ object }) => {
-      if(!options?.s3Key) {
+      if (!options?.s3Key) {
         console.log('No s3Key provided, skipping DB save');
         const parsedObject = bankStatementSchema.safeParse(object);
-        if(!parsedObject.success) {
+        if (!parsedObject.success) {
           console.error('Error parsing bank statement:', parsedObject.error);
           throw new Error('Error parsing bank statement');
         }
         return;
       }
       const parsedObject = bankStatementSchema.parse(object);
-      
+
       try {
         await prisma.bankStatement.create({
           data: {
@@ -53,6 +53,7 @@ export async function extractBankStatement(
             accountNumber: parsedObject.accountNumber,
             startingBalance: parsedObject.startingBalance,
             endingBalance: parsedObject.endingBalance,
+            currency: parsedObject.currency,
             s3Key: options.s3Key,
             transactions: {
               create: parsedObject.transactions.map((transaction) => ({
