@@ -35,8 +35,6 @@ model BankStatement {
   StatementAnalysis    StatementAnalysis[]
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
-
-  @@unique([startDate, endDate, accountNumber])
 }
 
 model Transaction {
