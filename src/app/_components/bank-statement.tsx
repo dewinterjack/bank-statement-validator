@@ -7,7 +7,6 @@ import {
   TrendingDown,
   FileText,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -21,31 +20,17 @@ import { Transaction } from './transaction';
 import { formatCurrency } from '@/lib/utils';
 
 interface BankStatementProps {
-  displayedBankStatement: PartialBankStatement;
-  handleReset: () => void;
+  statement: PartialBankStatement;
   formatDate: (date: string) => string;
 }
 
-export function BankStatement({
-  displayedBankStatement,
-  handleReset,
-  formatDate,
-}: BankStatementProps) {
+export function BankStatement({ statement, formatDate }: BankStatementProps) {
   const netChange =
-    displayedBankStatement.endingBalance != null &&
-    displayedBankStatement.startingBalance != null
-      ? displayedBankStatement.endingBalance -
-        displayedBankStatement.startingBalance
+    statement.endingBalance != null && statement.startingBalance != null
+      ? statement.endingBalance - statement.startingBalance
       : null;
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-foreground text-2xl font-bold">Analysis Results</h2>
-        <Button variant="outline" onClick={handleReset}>
-          Analyze Another Statement
-        </Button>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
@@ -57,12 +42,12 @@ export function BankStatement({
           <CardContent className="space-y-4">
             <div>
               <p className="text-lg font-semibold">
-                {displayedBankStatement.accountHolder?.name}
+                {statement.accountHolder?.name}
               </p>
               <div className="text-muted-foreground mt-1 text-sm">
-                {displayedBankStatement.accountHolder?.address?.map(
-                  (line, index) => <p key={index}>{line}</p>,
-                )}
+                {statement.accountHolder?.address?.map((line, index) => (
+                  <p key={index}>{line}</p>
+                ))}
               </div>
             </div>
             <Separator />
@@ -71,18 +56,15 @@ export function BankStatement({
                 <Calendar className="h-4 w-4" />
                 <span>
                   Start Date:{' '}
-                  {displayedBankStatement.startDate &&
-                    formatDate(displayedBankStatement.startDate)}
+                  {statement.startDate && formatDate(statement.startDate)}
                 </span>
                 <span>
-                  End Date:{' '}
-                  {displayedBankStatement.endDate &&
-                    formatDate(displayedBankStatement.endDate)}
+                  End Date: {statement.endDate && formatDate(statement.endDate)}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4" />
-                <span>Account: {displayedBankStatement.accountNumber}</span>
+                <span>Account: {statement.accountNumber}</span>
               </div>
             </div>
           </CardContent>
@@ -102,10 +84,10 @@ export function BankStatement({
                   Starting Balance
                 </span>
                 <span className="font-semibold">
-                  {displayedBankStatement.startingBalance != null &&
+                  {statement.startingBalance != null &&
                     formatCurrency(
-                      displayedBankStatement.startingBalance,
-                      displayedBankStatement.currency,
+                      statement.startingBalance,
+                      statement.currency,
                     )}
                 </span>
               </div>
@@ -114,11 +96,8 @@ export function BankStatement({
                   Ending Balance
                 </span>
                 <span className="font-semibold">
-                  {displayedBankStatement.endingBalance != null &&
-                    formatCurrency(
-                      displayedBankStatement.endingBalance,
-                      displayedBankStatement.currency,
-                    )}
+                  {statement.endingBalance != null &&
+                    formatCurrency(statement.endingBalance, statement.currency)}
                 </span>
               </div>
               <Separator />
@@ -138,10 +117,7 @@ export function BankStatement({
                         netChange > 0 ? 'text-primary' : 'text-destructive'
                       }`}
                     >
-                      {formatCurrency(
-                        netChange,
-                        displayedBankStatement.currency,
-                      )}
+                      {formatCurrency(netChange, statement.currency)}
                     </span>
                   </div>
                 ) : (
@@ -163,23 +139,21 @@ export function BankStatement({
                   Total Transactions
                 </span>
                 <span className="font-semibold">
-                  {displayedBankStatement.transactions?.length ?? 0}
+                  {statement.transactions?.length ?? 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Credits</span>
                 <span className="text-primary font-semibold">
-                  {displayedBankStatement.transactions?.filter(
-                    (t) => t?.type === 'credit',
-                  ).length ?? 0}
+                  {statement.transactions?.filter((t) => t?.type === 'credit')
+                    .length ?? 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Debits</span>
                 <span className="text-destructive font-semibold">
-                  {displayedBankStatement.transactions?.filter(
-                    (t) => t?.type === 'debit',
-                  ).length ?? 0}
+                  {statement.transactions?.filter((t) => t?.type === 'debit')
+                    .length ?? 0}
                 </span>
               </div>
             </div>
@@ -196,14 +170,14 @@ export function BankStatement({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {displayedBankStatement.transactions?.map(
+            {statement.transactions?.map(
               (transaction, index) =>
                 transaction && (
                   <Transaction
                     key={index}
                     transaction={transaction}
                     formatDate={formatDate}
-                    currency={displayedBankStatement.currency}
+                    currency={statement.currency}
                   />
                 ),
             )}

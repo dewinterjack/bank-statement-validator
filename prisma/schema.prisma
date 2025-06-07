@@ -2,46 +2,57 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model StatementAnalysis {
+  id              String         @id @default(uuid())
+  s3Key           String         @unique
+  status          String // e.g., 'PROCESSING', 'COMPLETED', 'FAILED'
+  validations     Json           @default("[]")
+  bankStatement   BankStatement? @relation(fields: [bankStatementId], references: [id])
+  bankStatementId String?        @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model BankStatement {
-    id                   String        @id @default(uuid())
-    accountHolderName    String
-    accountHolderAddress String[]
-    startDate            DateTime
-    endDate              DateTime
-    accountNumber        String
-    startingBalance      Float
-    endingBalance        Float
-    currency             String          @db.VarChar(3)
-    s3Key                String
-    transactions         Transaction[]
-    createdAt            DateTime      @default(now())
-    updatedAt            DateTime      @updatedAt
+  id                   String              @id @default(uuid())
+  accountHolderName    String
+  accountHolderAddress String[]
+  startDate            DateTime
+  endDate              DateTime
+  accountNumber        String
+  startingBalance      Float
+  endingBalance        Float
+  currency             String              @db.VarChar(3)
+  transactions         Transaction[]
+  StatementAnalysis    StatementAnalysis[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
-    @@unique([startDate, endDate, accountNumber])
+  @@unique([startDate, endDate, accountNumber])
 }
 
 model Transaction {
-    id              String          @id @default(uuid())
-    date            DateTime
-    description     String
-    amount          Float
-    balance         Float
-    type            TransactionType
-    bankStatementId String
-    bankStatement   BankStatement   @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
-    createdAt       DateTime        @default(now())
-    updatedAt       DateTime        @updatedAt
+  id              String          @id @default(uuid())
+  date            DateTime
+  description     String
+  amount          Float
+  balance         Float
+  type            TransactionType
+  bankStatementId String
+  bankStatement   BankStatement   @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 enum TransactionType {
-    credit
-    debit
+  credit
+  debit
 }

@@ -20,7 +20,8 @@ export async function POST(req: Request) {
     });
   }
 
-  const s3Key = `bank-statements/${uuidv4()}.pdf`;
+  const analysisId = uuidv4();
+  const s3Key = `bank-statements/${analysisId}.pdf`;
 
   try {
     await s3Client.send(
@@ -42,10 +43,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const handle = await tasks.trigger<typeof validateBankStatementTask>(
+  await tasks.trigger<typeof validateBankStatementTask>(
     'validate-bank-statement',
-    { s3Key },
+    { s3Key, analysisId },
   );
 
-  return NextResponse.json({ handle });
+  return NextResponse.json({ analysisId });
 }
