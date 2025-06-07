@@ -1,17 +1,18 @@
 import type React from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { PartialTransaction } from '@/lib/schemas';
+import { formatCurrency } from '@/lib/utils';
 
 interface TransactionProps {
   transaction: PartialTransaction;
-  formatCurrency: (amount: number) => string;
   formatDate: (date: string) => string;
+  currency: string | undefined;
 }
 
 export function Transaction({
   transaction,
-  formatCurrency,
   formatDate,
+  currency,
 }: TransactionProps) {
   return (
     <div className="border-border hover:bg-muted flex items-center justify-between rounded-lg border p-4 transition-colors">
@@ -37,11 +38,15 @@ export function Transaction({
           }`}
         >
           {transaction.type === 'credit' ? '+' : '-'}
-          {transaction.amount != null && formatCurrency(transaction.amount)}
+          {transaction.amount != undefined &&
+            currency != undefined &&
+            formatCurrency(transaction.amount, currency)}
         </p>
         <p className="text-muted-foreground text-sm">
           Balance:{' '}
-          {transaction.balance != null && formatCurrency(transaction.balance)}
+          {transaction.balance != undefined &&
+            currency != undefined &&
+            formatCurrency(transaction.balance, currency)}
         </p>
       </div>
     </div>

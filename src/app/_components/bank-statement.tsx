@@ -18,18 +18,17 @@ import {
 import { Separator } from '@/components/ui/separator';
 import type { PartialBankStatement } from '@/lib/schemas';
 import { Transaction } from './transaction';
+import { formatCurrency } from '@/lib/utils';
 
 interface BankStatementProps {
   displayedBankStatement: PartialBankStatement;
   handleReset: () => void;
-  formatCurrency: (amount: number) => string;
   formatDate: (date: string) => string;
 }
 
 export function BankStatement({
   displayedBankStatement,
   handleReset,
-  formatCurrency,
   formatDate,
 }: BankStatementProps) {
   const netChange =
@@ -99,7 +98,10 @@ export function BankStatement({
                 </span>
                 <span className="font-semibold">
                   {displayedBankStatement.startingBalance != null &&
-                    formatCurrency(displayedBankStatement.startingBalance)}
+                    formatCurrency(
+                      displayedBankStatement.startingBalance,
+                      displayedBankStatement.currency,
+                    )}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -108,7 +110,10 @@ export function BankStatement({
                 </span>
                 <span className="font-semibold">
                   {displayedBankStatement.endingBalance != null &&
-                    formatCurrency(displayedBankStatement.endingBalance)}
+                    formatCurrency(
+                      displayedBankStatement.endingBalance,
+                      displayedBankStatement.currency,
+                    )}
                 </span>
               </div>
               <Separator />
@@ -128,7 +133,10 @@ export function BankStatement({
                         netChange > 0 ? 'text-primary' : 'text-destructive'
                       }`}
                     >
-                      {formatCurrency(netChange)}
+                      {formatCurrency(
+                        netChange,
+                        displayedBankStatement.currency,
+                      )}
                     </span>
                   </div>
                 ) : (
@@ -189,8 +197,8 @@ export function BankStatement({
                   <Transaction
                     key={index}
                     transaction={transaction}
-                    formatCurrency={formatCurrency}
                     formatDate={formatDate}
+                    currency={displayedBankStatement.currency}
                   />
                 ),
             )}

@@ -160,13 +160,6 @@ export default function BankStatementAnalyzer() {
     setSelectedStatementId(null);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(Math.abs(amount));
-  };
-
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -302,7 +295,6 @@ export default function BankStatementAnalyzer() {
           <BankStatement
             displayedBankStatement={displayedBankStatement}
             handleReset={handleReset}
-            formatCurrency={formatCurrency}
             formatDate={formatDate}
           />
         )}

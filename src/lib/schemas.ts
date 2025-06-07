@@ -21,6 +21,10 @@ export const bankStatementSchema = z.object({
   accountNumber: z.string(),
   startingBalance: z.number(),
   endingBalance: z.number(),
+  currency: z
+    .string()
+    .describe('The ISO 4217 currency code of the bank statement')
+    .length(3, 'Currency code must be 3 characters long'),
   transactions: z.array(transactionSchema),
 });
 

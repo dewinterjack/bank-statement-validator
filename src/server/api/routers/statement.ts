@@ -40,6 +40,7 @@ export const statementRouter = createTRPCRouter({
         accountNumber: statement.accountNumber,
         startingBalance: statement.startingBalance,
         endingBalance: statement.endingBalance,
+        currency: statement.currency,
         accountHolder: {
           name: statement.accountHolderName,
           address: statement.accountHolderAddress,
