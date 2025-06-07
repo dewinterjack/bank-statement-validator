@@ -12,9 +12,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { bankStatementSchema, type BankStatement } from '@/lib/schemas';
+import { bankStatementSchema, type PartialBankStatement } from '@/lib/schemas';
 import { StatementHistory } from './_components/statement-history';
-import { BankStatementDisplay } from './_components/bank-statement';
+import { BankStatement } from './_components/bank-statement';
 import { api } from '@/trpc/react';
 
 export default function BankStatementAnalyzer() {
@@ -25,7 +25,7 @@ export default function BankStatementAnalyzer() {
   );
 
   const [displayedBankStatement, setDisplayedBankStatement] =
-    useState<BankStatement | null>(null);
+    useState<PartialBankStatement | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const {
@@ -51,14 +51,14 @@ export default function BankStatementAnalyzer() {
 
   useEffect(() => {
     if (streamedObject) {
-      setDisplayedBankStatement(streamedObject as BankStatement);
+      setDisplayedBankStatement(streamedObject);
       setSubmissionError(null);
     }
   }, [streamedObject]);
 
   useEffect(() => {
     if (selectedStatement) {
-      setDisplayedBankStatement(selectedStatement as BankStatement);
+      setDisplayedBankStatement(selectedStatement);
       setSelectedStatementId(null);
     }
   }, [selectedStatement]);
@@ -298,8 +298,8 @@ export default function BankStatementAnalyzer() {
           </Card>
         )}
 
-        {displayedBankStatement && !currentLoading && (
-          <BankStatementDisplay
+        {displayedBankStatement && (
+          <BankStatement
             displayedBankStatement={displayedBankStatement}
             handleReset={handleReset}
             formatCurrency={formatCurrency}

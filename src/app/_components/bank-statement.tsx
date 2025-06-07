@@ -16,22 +16,28 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { BankStatement } from '@/lib/schemas';
+import type { PartialBankStatement } from '@/lib/schemas';
 import { Transaction } from './transaction';
 
-interface BankStatementDisplayProps {
-  displayedBankStatement: BankStatement;
+interface BankStatementProps {
+  displayedBankStatement: PartialBankStatement;
   handleReset: () => void;
   formatCurrency: (amount: number) => string;
   formatDate: (date: string) => string;
 }
 
-export function BankStatementDisplay({
+export function BankStatement({
   displayedBankStatement,
   handleReset,
   formatCurrency,
   formatDate,
-}: BankStatementDisplayProps) {
+}: BankStatementProps) {
+  const netChange =
+    displayedBankStatement.endingBalance != null &&
+    displayedBankStatement.startingBalance != null
+      ? displayedBankStatement.endingBalance -
+        displayedBankStatement.startingBalance
+      : null;
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -52,13 +58,11 @@ export function BankStatementDisplay({
           <CardContent className="space-y-4">
             <div>
               <p className="text-lg font-semibold">
-                {displayedBankStatement.accountHolder.name}
+                {displayedBankStatement.accountHolder?.name}
               </p>
               <div className="text-muted-foreground mt-1 text-sm">
-                {displayedBankStatement.accountHolder.address.map(
-                  (line, index) => (
-                    <p key={index}>{line}</p>
-                  ),
+                {displayedBankStatement.accountHolder?.address?.map(
+                  (line, index) => <p key={index}>{line}</p>,
                 )}
               </div>
             </div>
@@ -68,7 +72,8 @@ export function BankStatementDisplay({
                 <Calendar className="h-4 w-4" />
                 <span>
                   Statement Date:{' '}
-                  {formatDate(displayedBankStatement.documentDate)}
+                  {displayedBankStatement.documentDate &&
+                    formatDate(displayedBankStatement.documentDate)}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -93,7 +98,8 @@ export function BankStatementDisplay({
                   Starting Balance
                 </span>
                 <span className="font-semibold">
-                  {formatCurrency(displayedBankStatement.startingBalance)}
+                  {displayedBankStatement.startingBalance != null &&
+                    formatCurrency(displayedBankStatement.startingBalance)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -101,7 +107,8 @@ export function BankStatementDisplay({
                   Ending Balance
                 </span>
                 <span className="font-semibold">
-                  {formatCurrency(displayedBankStatement.endingBalance)}
+                  {displayedBankStatement.endingBalance != null &&
+                    formatCurrency(displayedBankStatement.endingBalance)}
                 </span>
               </div>
               <Separator />
@@ -109,27 +116,24 @@ export function BankStatementDisplay({
                 <span className="text-muted-foreground text-sm">
                   Net Change
                 </span>
-                <div className="flex items-center gap-1">
-                  {displayedBankStatement.endingBalance >
-                  displayedBankStatement.startingBalance ? (
-                    <TrendingUp className="text-primary h-4 w-4" />
-                  ) : (
-                    <TrendingDown className="text-destructive h-4 w-4" />
-                  )}
-                  <span
-                    className={`font-semibold ${
-                      displayedBankStatement.endingBalance >
-                      displayedBankStatement.startingBalance
-                        ? 'text-primary'
-                        : 'text-destructive'
-                    }`}
-                  >
-                    {formatCurrency(
-                      displayedBankStatement.endingBalance -
-                        displayedBankStatement.startingBalance,
+                {netChange != null ? (
+                  <div className="flex items-center gap-1">
+                    {netChange > 0 ? (
+                      <TrendingUp className="text-primary h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="text-destructive h-4 w-4" />
                     )}
-                  </span>
-                </div>
+                    <span
+                      className={`font-semibold ${
+                        netChange > 0 ? 'text-primary' : 'text-destructive'
+                      }`}
+                    >
+                      {formatCurrency(netChange)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="font-semibold">-</span>
+                )}
               </div>
             </div>
           </CardContent>
@@ -146,27 +150,23 @@ export function BankStatementDisplay({
                   Total Transactions
                 </span>
                 <span className="font-semibold">
-                  {displayedBankStatement.transactions.length}
+                  {displayedBankStatement.transactions?.length ?? 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Credits</span>
                 <span className="text-primary font-semibold">
-                  {
-                    displayedBankStatement.transactions.filter(
-                      (t) => t.type === 'credit',
-                    ).length
-                  }
+                  {displayedBankStatement.transactions?.filter(
+                    (t) => t?.type === 'credit',
+                  ).length ?? 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Debits</span>
                 <span className="text-destructive font-semibold">
-                  {
-                    displayedBankStatement.transactions.filter(
-                      (t) => t.type === 'debit',
-                    ).length
-                  }
+                  {displayedBankStatement.transactions?.filter(
+                    (t) => t?.type === 'debit',
+                  ).length ?? 0}
                 </span>
               </div>
             </div>
@@ -183,14 +183,17 @@ export function BankStatementDisplay({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {displayedBankStatement.transactions.map((transaction) => (
-              <Transaction
-                key={`${transaction.date}-${transaction.description}-${transaction.amount}`}
-                transaction={transaction}
-                formatCurrency={formatCurrency}
-                formatDate={formatDate}
-              />
-            ))}
+            {displayedBankStatement.transactions?.map(
+              (transaction, index) =>
+                transaction && (
+                  <Transaction
+                    key={index}
+                    transaction={transaction}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                  />
+                ),
+            )}
           </div>
         </CardContent>
       </Card>

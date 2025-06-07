@@ -1,3 +1,4 @@
+import type { DeepPartial } from 'ai';
 import { z } from 'zod';
 
 export const transactionSchema = z.object({
@@ -9,6 +10,7 @@ export const transactionSchema = z.object({
 });
 
 export type Transaction = z.infer<typeof transactionSchema>;
+export type PartialTransaction = DeepPartial<Transaction>;
 
 export const bankStatementSchema = z.object({
   accountHolder: z.object({
@@ -23,3 +25,4 @@ export const bankStatementSchema = z.object({
 });
 
 export type BankStatement = z.infer<typeof bankStatementSchema>;
+export type PartialBankStatement = DeepPartial<BankStatement>;
