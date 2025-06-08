@@ -15,20 +15,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { PartialBankStatement } from '@/lib/schemas';
+import type { BankStatement } from '@/lib/schemas';
 import { Transaction } from './transaction';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface BankStatementProps {
-  statement: PartialBankStatement;
+  statement: BankStatement;
   formatDate: (date: string) => string;
 }
 
 export function BankStatement({ statement, formatDate }: BankStatementProps) {
-  const netChange =
-    statement.endingBalance != null && statement.startingBalance != null
-      ? statement.endingBalance - statement.startingBalance
-      : null;
+  const netChange = statement.endingBalance - statement.startingBalance;
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -42,10 +39,10 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
           <CardContent className="space-y-3 pt-0">
             <div>
               <p className="text-sm font-semibold">
-                {statement.accountHolder?.name}
+                {statement.accountHolder.name}
               </p>
               <div className="text-muted-foreground mt-1 space-y-0.5 text-xs">
-                {statement.accountHolder?.address?.map((line, index) => (
+                {statement.accountHolder.address.map((line, index) => (
                   <p key={index}>{line}</p>
                 ))}
               </div>
@@ -55,8 +52,8 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
               <div className="flex items-center gap-2 text-xs">
                 <Calendar className="h-3 w-3" />
                 <span>
-                  {statement.startDate && formatDate(statement.startDate)} -{' '}
-                  {statement.endDate && formatDate(statement.endDate)}
+                  {formatDate(statement.startDate)} -{' '}
+                  {formatDate(statement.endDate)}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
@@ -81,11 +78,10 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
                   Starting Balance
                 </span>
                 <span className="text-sm font-semibold">
-                  {statement.startingBalance != null &&
-                    formatCurrency(
-                      statement.startingBalance,
-                      statement.currency,
-                    )}
+                  {formatCurrency(
+                    statement.startingBalance,
+                    statement.currency,
+                  )}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -93,8 +89,7 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
                   Ending Balance
                 </span>
                 <span className="text-sm font-semibold">
-                  {statement.endingBalance != null &&
-                    formatCurrency(statement.endingBalance, statement.currency)}
+                  {formatCurrency(statement.endingBalance, statement.currency)}
                 </span>
               </div>
               <Separator />
@@ -102,24 +97,20 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
                 <span className="text-muted-foreground text-xs">
                   Net Change
                 </span>
-                {netChange != null ? (
-                  <div className="flex items-center gap-1">
-                    {netChange > 0 ? (
-                      <TrendingUp className="h-3 w-3 text-green-600" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-red-600" />
-                    )}
-                    <span
-                      className={`text-sm font-semibold ${
-                        netChange > 0 ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {formatCurrency(netChange, statement.currency)}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-sm font-semibold">-</span>
-                )}
+                <div className="flex items-center gap-1">
+                  {netChange > 0 ? (
+                    <TrendingUp className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 text-red-600" />
+                  )}
+                  <span
+                    className={cn('text-sm font-semibold text-red-600', {
+                      'text-green-600': netChange > 0,
+                    })}
+                  >
+                    {formatCurrency(netChange, statement.currency)}
+                  </span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -136,21 +127,25 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
                   Total Transactions
                 </span>
                 <span className="text-sm font-semibold">
-                  {statement.transactions?.length ?? 0}
+                  {statement.transactions.length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-xs">Credits</span>
                 <span className="text-sm font-semibold text-green-600">
-                  {statement.transactions?.filter((t) => t?.type === 'credit')
-                    .length ?? 0}
+                  {
+                    statement.transactions.filter((t) => t.type === 'credit')
+                      .length
+                  }
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-xs">Debits</span>
                 <span className="text-sm font-semibold text-red-600">
-                  {statement.transactions?.filter((t) => t?.type === 'debit')
-                    .length ?? 0}
+                  {
+                    statement.transactions.filter((t) => t.type === 'debit')
+                      .length
+                  }
                 </span>
               </div>
             </div>
@@ -167,17 +162,14 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-1">
-            {statement.transactions?.map(
-              (transaction, index) =>
-                transaction && (
-                  <Transaction
-                    key={index}
-                    transaction={transaction}
-                    formatDate={formatDate}
-                    currency={statement.currency}
-                  />
-                ),
-            )}
+            {statement.transactions.map((transaction, index) => (
+              <Transaction
+                key={index}
+                transaction={transaction}
+                formatDate={formatDate}
+                currency={statement.currency}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
