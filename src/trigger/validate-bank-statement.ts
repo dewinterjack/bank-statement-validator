@@ -50,7 +50,7 @@ export const validateBankStatementTask = task({
   id: 'validate-bank-statement',
   maxDuration: 300,
   run: async (payload: { s3Key: string; analysisId: string }, { ctx }) => {
-    await db.statementAnalysis.create({
+    const analysis = await db.statementAnalysis.create({
       data: {
         status: 'PROCESSING',
         s3Key: payload.s3Key,
@@ -69,6 +69,12 @@ export const validateBankStatementTask = task({
     const response = await s3Client.send(getObjectCommand);
 
     if (!response.Body) {
+      await db.statementAnalysis.update({
+        where: { id: analysis.id },
+        data: {
+          status: 'FAILED',
+        },
+      });
       throw new Error('No response from S3');
     }
     const pdfBuffer = Buffer.from(await response.Body.transformToByteArray());
@@ -110,6 +116,31 @@ export const validateBankStatementTask = task({
     });
 
     if (classificationResult.passed === false) {
+      await db.statementAnalysis.update({
+        where: { id: analysis.id },
+        data: {
+          status: 'FAILED',
+          validations: {
+            create: aiValidations.map((validation) => ({
+              confidence: validation.confidence,
+              passed: validation.passed,
+              reasoning: validation.reasoning,
+              title: validation.title,
+              description: validation.description,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              additionalDetails: validation.additionalDetails,
+            })),
+          },
+          calculatedValidations: {
+            create: calculatedValidations.map((validation) => ({
+              passed: validation.passed,
+              reasoning: validation.reasoning,
+              title: validation.title,
+              description: validation.description,
+            })),
+          },
+        },
+      });
       return {
         aiValidations,
         calculatedValidations,
@@ -159,7 +190,7 @@ export const validateBankStatementTask = task({
       });
 
       await db.statementAnalysis.update({
-        where: { id: payload.analysisId },
+        where: { id: analysis.id },
         data: {
           status: overallStatus,
           validations: {
@@ -199,7 +230,7 @@ export const validateBankStatementTask = task({
     } catch (error) {
       logger.error('Failed to save bank statement to DB', { error });
       await db.statementAnalysis.update({
-        where: { id: payload.analysisId },
+        where: { id: analysis.id },
         data: {
           status: 'FAILED',
           validations: {
@@ -225,7 +256,11 @@ export const validateBankStatementTask = task({
           },
         },
       });
-      return { analysisId: payload.analysisId, status: 'FAILED' };
+      return {
+        aiValidations,
+        calculatedValidations,
+        status: 'FAILED',
+      };
     }
   },
 });
