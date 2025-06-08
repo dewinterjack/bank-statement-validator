@@ -23,7 +23,7 @@ export const transactionSchema = z.object({
   date: z.string().datetime(),
   description: z.string(),
   amount: z.number(),
-  balance: z.number(),
+  balance: z.number().optional(),
   type: z.enum(['credit', 'debit']),
 });
 

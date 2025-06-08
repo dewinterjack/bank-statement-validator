@@ -42,7 +42,7 @@ model Transaction {
   date            DateTime
   description     String
   amount          Float
-  balance         Float
+  balance         Float?
   type            TransactionType
   bankStatementId String
   bankStatement   BankStatement   @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)

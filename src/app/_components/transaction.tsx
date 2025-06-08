@@ -37,9 +37,11 @@ export function Transaction({ transaction, currency }: TransactionProps) {
           {isCredit ? '+' : '-'}
           {formatCurrency(transaction.amount, currency)}
         </p>
-        <p className="text-muted-foreground text-sm">
-          Balance: {formatCurrency(transaction.balance, currency)}
-        </p>
+        {transaction.balance && (
+          <p className="text-muted-foreground text-sm">
+            Balance: {formatCurrency(transaction.balance, currency)}
+          </p>
+        )}
       </div>
     </div>
   );
