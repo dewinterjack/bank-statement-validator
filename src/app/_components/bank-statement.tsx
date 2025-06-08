@@ -15,15 +15,22 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { BankStatement } from '@/lib/schemas';
-import { Transaction } from './transaction';
+import { TransactionDisplay } from './transaction';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import type { RouterOutputs } from '@/trpc/react';
+import type { BankStatement, Transaction } from '@prisma/client';
 
 interface BankStatementProps {
-  statement: BankStatement;
+  statement: BankStatement & {
+    transactions: Transaction[];
+  };
 }
 
-export function BankStatement({ statement }: BankStatementProps) {
+export function BankStatementDisplay({ statement }: BankStatementProps) {
+  if (!statement) {
+    return null;
+  }
+
   const netChange = statement.endingBalance - statement.startingBalance;
   return (
     <div className="space-y-4">
@@ -38,10 +45,10 @@ export function BankStatement({ statement }: BankStatementProps) {
           <CardContent className="space-y-3 pt-0">
             <div>
               <p className="text-sm font-semibold">
-                {statement.accountHolder.name}
+                {statement.accountHolderName}
               </p>
               <div className="text-muted-foreground mt-1 space-y-0.5 text-xs">
-                {statement.accountHolder.address.map((line, index) => (
+                {statement.accountHolderAddress.map((line, index) => (
                   <p key={index}>{line}</p>
                 ))}
               </div>
@@ -51,8 +58,8 @@ export function BankStatement({ statement }: BankStatementProps) {
               <div className="flex items-center gap-2 text-xs">
                 <Calendar className="h-3 w-3" />
                 <span>
-                  {formatDate(statement.startDate)} -{' '}
-                  {formatDate(statement.endDate)}
+                  {formatDate(statement.startDate.toISOString())} -{' '}
+                  {formatDate(statement.endDate.toISOString())}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
@@ -126,7 +133,7 @@ export function BankStatement({ statement }: BankStatementProps) {
                   Total Transactions
                 </span>
                 <span className="text-sm font-semibold">
-                  {statement.transactions.length}
+                  {statement.transactions?.length ?? 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -162,9 +169,12 @@ export function BankStatement({ statement }: BankStatementProps) {
         <CardContent className="pt-0">
           <div className="space-y-1">
             {statement.transactions.map((transaction, index) => (
-              <Transaction
+              <TransactionDisplay
                 key={index}
-                transaction={transaction}
+                transaction={{
+                  ...transaction,
+                  date: new Date(transaction.date),
+                }}
                 currency={statement.currency}
               />
             ))}

@@ -18,7 +18,7 @@ export default async function RunPage({
 
   return (
     <TriggerProvider accessToken={publicAccessToken.value}>
-      <ScanDetails id={id} isOptimisticProcessing={!!freshUpload} />
+      <ScanDetails id={id} />
     </TriggerProvider>
   );
 }

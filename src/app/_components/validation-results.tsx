@@ -7,10 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { CheckCircle, XCircle, HelpCircle } from 'lucide-react';
-import type {
-  AIValidation,
-  CalculatedValidation,
-} from '@/lib/validation/schemas';
+import type { AIValidation, CalculatedValidation } from '@prisma/client';
 
 interface ValidationResultsProps {
   aiValidations: AIValidation[];
@@ -27,12 +24,6 @@ const statusColors = {
   PASS: 'text-green-600',
   FAIL: 'text-red-600',
   UNKNOWN: 'text-muted-foreground',
-};
-
-const statusBadges = {
-  PASS: 'default' as const,
-  FAIL: 'destructive' as const,
-  UNKNOWN: 'secondary' as const,
 };
 
 export function ValidationResults({

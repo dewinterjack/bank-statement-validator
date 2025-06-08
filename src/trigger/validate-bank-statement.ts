@@ -2,7 +2,7 @@ import { s3Client } from '@/lib/s3-client';
 import { extractBankStatement } from '@/lib/ai/extract-bank-statement';
 import { classifyDocument } from '@/lib/ai/classify-document';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
-import { batch, logger, metadata, task } from '@trigger.dev/sdk/v3';
+import { batch, logger, task } from '@trigger.dev/sdk/v3';
 import { validateBankStatement } from '@/lib/validation/validators';
 import type {
   AIValidation,
@@ -11,6 +11,7 @@ import type {
 import { db } from '@/server/db';
 import { analyzeDocumentQuality } from '@/lib/ai/analyze-document-quality';
 import { toAiValidation } from '@/lib/validation/result-parsing';
+import { updateStatus } from '@/lib/metadataStore';
 
 export const analyzeDocumentQualityTask = task({
   id: 'analyze-document-quality',
@@ -50,6 +51,11 @@ export const validateBankStatementTask = task({
   id: 'validate-bank-statement',
   maxDuration: 300,
   run: async (payload: { s3Key: string; analysisId: string }, { ctx }) => {
+    updateStatus({
+      progress: 0,
+      label: 'Starting validation process',
+    });
+
     const analysis = await db.statementAnalysis.create({
       data: {
         status: 'PROCESSING',
@@ -61,6 +67,11 @@ export const validateBankStatementTask = task({
 
     const aiValidations: AIValidation[] = [];
     const calculatedValidations: CalculatedValidation[] = [];
+
+    updateStatus({
+      progress: 5,
+      label: 'Fetching document from storage',
+    });
 
     const getObjectCommand = new GetObjectCommand({
       Bucket: 'pdfs',
@@ -79,7 +90,10 @@ export const validateBankStatementTask = task({
     }
     const pdfBuffer = Buffer.from(await response.Body.transformToByteArray());
 
-    metadata.set('currentStep', 'Performing initial validations');
+    updateStatus({
+      progress: 20,
+      label: 'Performing initial validations',
+    });
     const {
       runs: [legibilityResult, typeResult],
     } = await batch.triggerByTaskAndWait([
@@ -130,9 +144,7 @@ export const validateBankStatementTask = task({
         },
       });
       return {
-        aiValidations,
-        calculatedValidations,
-        status: 'FAILED',
+        result: analysis.id,
       };
     }
 
@@ -140,14 +152,20 @@ export const validateBankStatementTask = task({
       aiValidations.push(toAiValidation(legibilityIssue, 'legibility-issue'));
     });
 
-    metadata.set('currentStep', 'Extracting data');
+    updateStatus({
+      progress: 50,
+      label: 'Extracting data',
+    });
     const result = await extractBankStatement(
       pdfBuffer.toString('base64'),
       'application/pdf',
     );
     const extractedStatement = result.object;
 
-    metadata.set('currentStep', 'Validating data');
+    updateStatus({
+      progress: 75,
+      label: 'Validating data',
+    });
     calculatedValidations.push(...validateBankStatement(extractedStatement));
 
     const overallStatus =
@@ -156,7 +174,10 @@ export const validateBankStatementTask = task({
         ? 'FAILED'
         : 'COMPLETED';
 
-    metadata.set('currentStep', 'Finishing up');
+    updateStatus({
+      progress: 95,
+      label: 'Finishing up',
+    });
     try {
       // Only create the BankStatement if the core validations didn't hard-fail
       const bankStatement = await db.bankStatement.create({
@@ -211,13 +232,7 @@ export const validateBankStatementTask = task({
       });
 
       return {
-        aiValidations,
-        calculatedValidations,
-        bankStatement: {
-          ...extractedStatement,
-          id: bankStatement.id,
-        },
-        status: overallStatus,
+        result: analysis.id,
       };
     } catch (error) {
       logger.error('Failed to save bank statement to DB', { error });
@@ -249,9 +264,7 @@ export const validateBankStatementTask = task({
         },
       });
       return {
-        aiValidations,
-        calculatedValidations,
-        status: 'FAILED',
+        result: analysis.id,
       };
     }
   },
