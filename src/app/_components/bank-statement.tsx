@@ -17,14 +17,13 @@ import {
 import { Separator } from '@/components/ui/separator';
 import type { BankStatement } from '@/lib/schemas';
 import { Transaction } from './transaction';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 
 interface BankStatementProps {
   statement: BankStatement;
-  formatDate: (date: string) => string;
 }
 
-export function BankStatement({ statement, formatDate }: BankStatementProps) {
+export function BankStatement({ statement }: BankStatementProps) {
   const netChange = statement.endingBalance - statement.startingBalance;
   return (
     <div className="space-y-4">
@@ -166,7 +165,6 @@ export function BankStatement({ statement, formatDate }: BankStatementProps) {
               <Transaction
                 key={index}
                 transaction={transaction}
-                formatDate={formatDate}
                 currency={statement.currency}
               />
             ))}

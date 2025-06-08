@@ -45,10 +45,7 @@ export function ScanDetails({
         <ValidationResults validations={run?.output?.validations ?? []} />
 
         {run?.output?.bankStatement && (
-          <BankStatement
-            statement={run?.output?.bankStatement}
-            formatDate={(date) => new Date(date).toLocaleDateString()}
-          />
+          <BankStatement statement={run?.output?.bankStatement} />
         )}
       </div>
     </div>

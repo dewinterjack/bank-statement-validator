@@ -1,19 +1,14 @@
 import type React from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { Transaction } from '@/lib/schemas';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 
 interface TransactionProps {
   transaction: Transaction;
-  formatDate: (date: string) => string;
   currency: string | undefined;
 }
 
-export function Transaction({
-  transaction,
-  formatDate,
-  currency,
-}: TransactionProps) {
+export function Transaction({ transaction, currency }: TransactionProps) {
   const isCredit = transaction.type === 'credit';
   return (
     <div className="border-border hover:bg-muted flex items-center justify-between rounded-lg border p-4 transition-colors">

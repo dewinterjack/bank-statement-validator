@@ -11,3 +11,7 @@ export const formatCurrency = (amount: number, currency = 'USD') => {
     currency: currency,
   }).format(Math.abs(amount));
 };
+
+export const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString();
+};
