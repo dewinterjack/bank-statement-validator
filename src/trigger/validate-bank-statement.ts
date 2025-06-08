@@ -111,10 +111,6 @@ export const validateBankStatementTask = task({
       toAiValidation(classificationResult, 'document-classification'),
     );
 
-    legibilityResults.forEach((legibilityIssue) => {
-      aiValidations.push(toAiValidation(legibilityIssue, 'legibility-issue'));
-    });
-
     if (classificationResult.passed === false) {
       await db.statementAnalysis.update({
         where: { id: analysis.id },
@@ -131,14 +127,6 @@ export const validateBankStatementTask = task({
               additionalDetails: validation.additionalDetails,
             })),
           },
-          calculatedValidations: {
-            create: calculatedValidations.map((validation) => ({
-              passed: validation.passed,
-              reasoning: validation.reasoning,
-              title: validation.title,
-              description: validation.description,
-            })),
-          },
         },
       });
       return {
@@ -147,6 +135,10 @@ export const validateBankStatementTask = task({
         status: 'FAILED',
       };
     }
+
+    legibilityResults.forEach((legibilityIssue) => {
+      aiValidations.push(toAiValidation(legibilityIssue, 'legibility-issue'));
+    });
 
     metadata.set('currentStep', 'Extracting data');
     const result = await extractBankStatement(

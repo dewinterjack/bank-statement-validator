@@ -11,7 +11,6 @@ import type {
   AIValidation,
   CalculatedValidation,
 } from '@/lib/validation/schemas';
-import { Badge } from '@/components/ui/badge';
 
 interface ValidationResultsProps {
   aiValidations: AIValidation[];
