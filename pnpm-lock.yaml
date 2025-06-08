@@ -35,9 +35,6 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.69.0
         version: 5.80.5(react@19.1.0)
-      '@tanstack/react-query-devtools':
-        specifier: ^5.80.6
-        version: 5.80.6(@tanstack/react-query@5.80.5(react@19.1.0))(react@19.1.0)
       '@trigger.dev/react-hooks':
         specifier: ^3.3.17
         version: 3.3.17(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -96,6 +93,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.0.15
         version: 4.1.8
+      '@tanstack/react-query-devtools':
+        specifier: ^5.80.6
+        version: 5.80.6(@tanstack/react-query@5.80.5(react@19.1.0))(react@19.1.0)
       '@trigger.dev/build':
         specifier: ^3.3.17
         version: 3.3.17(typescript@5.8.3)
