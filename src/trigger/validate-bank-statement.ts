@@ -52,7 +52,6 @@ export const validateBankStatementTask = task({
   run: async (payload: { s3Key: string; analysisId: string }, { ctx }) => {
     await db.statementAnalysis.create({
       data: {
-        id: payload.analysisId,
         status: 'PROCESSING',
         s3Key: payload.s3Key,
       },
@@ -109,6 +108,14 @@ export const validateBankStatementTask = task({
     legibilityResults.forEach((legibilityIssue) => {
       aiValidations.push(toAiValidation(legibilityIssue, 'legibility-issue'));
     });
+
+    if (classificationResult.passed === false) {
+      return {
+        aiValidations,
+        calculatedValidations,
+        status: 'FAILED',
+      };
+    }
 
     metadata.set('currentStep', 'Extracting data');
     const result = await extractBankStatement(
