@@ -1,29 +1,51 @@
-# Create T3 App
+# bank-statement-validator
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A tool to validate bank statements.
 
-## What's next? How do I make an app with this?
+## Tech Stack
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- [Next.js](https://nextjs.org/)
+- [Supabase](https://supabase.com/) - s3 storage, postgres database
+- [Vercel AI SDK](https://ai-sdk.dev/)
+- [trigger.dev](https://trigger.dev/) - workflow orchestration
+- [Prisma](https://www.prisma.io/) - database ORM and state based schema with migration generation
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Setup
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+Install dependencies
 
-## Learn More
+```bash
+pnpm install
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+Start supabase (with docker running)
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
+pnpx supabase start
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+Copy the `.env.example` file to `.env` and fill in the values.
 
-## How do I deploy this?
+```bash
+cp .env.example .env
+```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+To get the .env values with `get-from-supabase-status`
+
+```bash
+pnpx supabase status
+```
+
+Create a [trigger.dev account](https://cloud.trigger.dev/) if you don't have one.
+
+[Create a development API key](https://trigger.dev/docs/apikeys) and set it in the `.env` file.
+
+```bash
+TRIGGER_API_KEY=your-trigger-api-key
+```
+
+Start the development server
+
+```bash
+pnpm dev
+```
