@@ -1,4 +1,4 @@
-import { documentClassificationSchema } from '@/lib/schemas';
+import { documentClassificationSchema } from '@/lib/validation/schemas';
 import { generateDocumentAnalysis } from './generate-document-analysis';
 
 const SYSTEM_MESSAGE = `You are a document classifier. Your job is to analyze a document and determine if it is a bank statement or not. 

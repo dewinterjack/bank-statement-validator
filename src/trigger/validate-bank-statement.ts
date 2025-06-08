@@ -3,10 +3,14 @@ import { extractBankStatement } from '@/lib/ai/extract-bank-statement';
 import { classifyDocument } from '@/lib/ai/classify-document';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { batch, logger, metadata, task } from '@trigger.dev/sdk/v3';
-import { validateBankStatement } from '@/lib/validators';
-import type { ValidationResult } from '@/lib/schemas';
+import { validateBankStatement } from '@/lib/validation/validators';
+import type {
+  AIValidation,
+  CalculatedValidation,
+} from '@/lib/validation/schemas';
 import { db } from '@/server/db';
 import { analyzeDocumentQuality } from '@/lib/ai/analyze-document-quality';
+import { toAiValidation } from '@/lib/validation/resultParsing';
 
 export const analyzeDocumentQualityTask = task({
   id: 'analyze-document-quality',
@@ -56,7 +60,8 @@ export const validateBankStatementTask = task({
 
     logger.log('Starting bank statement validation workflow', { payload, ctx });
 
-    const validations: ValidationResult[] = [];
+    const aiValidations: AIValidation[] = [];
+    const calculatedValidations: CalculatedValidation[] = [];
 
     const getObjectCommand = new GetObjectCommand({
       Bucket: 'pdfs',
@@ -88,60 +93,22 @@ export const validateBankStatementTask = task({
         cause: typeResult.error,
       });
     }
-    const classificationOutput = typeResult.output.result;
+    const classificationResult = typeResult.output.result;
 
     if (!legibilityResult.ok) {
       throw new Error('Document legibility check failed', {
         cause: legibilityResult.error,
       });
     }
-    const legibilityOutput = legibilityResult.output.result;
+    const legibilityResults = legibilityResult.output.result;
 
-    validations.push(
-      {
-        check: 'Document Classification',
-        status: classificationOutput.isBankStatement ? 'PASS' : 'FAIL',
-        message: classificationOutput.isBankStatement
-          ? 'Document identified as a bank statement'
-          : `Document is not a bank statement.`,
-        confidence: classificationOutput.confidence,
-        details: { reasoning: classificationOutput.reasoning },
-      },
-      {
-        check: 'Document Legibility',
-        status: legibilityOutput.isLegible ? 'PASS' : 'FAIL',
-        message: legibilityOutput.isLegible
-          ? 'Document is legible'
-          : 'Document is not legible',
-        confidence: legibilityOutput.confidence,
-        details: {
-          reasoning: legibilityOutput.qualityIssues
-            .map((issue) => issue.description)
-            .join(', '),
-        },
-      },
+    aiValidations.push(
+      toAiValidation(classificationResult, 'document-classification'),
     );
 
-    if (
-      classificationOutput.confidence < 0.7 &&
-      classificationOutput.isBankStatement
-    ) {
-      validations.push({
-        check: 'Document Confidence',
-        status: 'WARN',
-        message: 'Low confidence in classification. Please review carefully.',
-        confidence: classificationOutput.confidence,
-        details: { reasoning: classificationOutput.reasoning },
-      });
-    }
-
-    if (!classificationOutput.isBankStatement) {
-      await db.statementAnalysis.update({
-        where: { id: payload.analysisId },
-        data: { status: 'FAILED', validations: validations },
-      });
-      return { validations, status: 'FAILED' };
-    }
+    legibilityResults.forEach((legibilityIssue) => {
+      aiValidations.push(toAiValidation(legibilityIssue, 'legibility-issue'));
+    });
 
     metadata.set('currentStep', 'Extracting data');
     const result = await extractBankStatement(
@@ -151,12 +118,13 @@ export const validateBankStatementTask = task({
     const extractedStatement = result.object;
 
     metadata.set('currentStep', 'Validating data');
-    const reconciliationResults = validateBankStatement(extractedStatement);
-    validations.push(...reconciliationResults);
+    calculatedValidations.push(...validateBankStatement(extractedStatement));
 
-    const overallStatus = validations.some((v) => v.status === 'FAIL')
-      ? 'FAILED'
-      : 'COMPLETED';
+    const overallStatus =
+      aiValidations.some((v) => v.passed === false) ||
+      calculatedValidations.some((v) => v.passed === false)
+        ? 'FAILED'
+        : 'COMPLETED';
 
     metadata.set('currentStep', 'Finishing up');
     try {
@@ -187,13 +155,34 @@ export const validateBankStatementTask = task({
         where: { id: payload.analysisId },
         data: {
           status: overallStatus,
-          validations: validations,
+          validations: {
+            create: aiValidations.map((validation) => ({
+              confidence: validation.confidence,
+              passed: validation.passed,
+              reasoning: validation.reasoning,
+              title: validation.title,
+              description: validation.description,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              additionalDetails: validation.additionalDetails,
+            })),
+          },
+          calculatedValidations: {
+            create: calculatedValidations.map((validation) => ({
+              passed: validation.passed,
+              reasoning: validation.reasoning,
+              title: validation.title,
+              description: validation.description,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              additionalDetails: validation.additionalDetails,
+            })),
+          },
           bankStatementId: bankStatement.id,
         },
       });
 
       return {
-        validations: validations,
+        aiValidations,
+        calculatedValidations,
         bankStatement: {
           ...extractedStatement,
           id: bankStatement.id,
@@ -204,7 +193,30 @@ export const validateBankStatementTask = task({
       logger.error('Failed to save bank statement to DB', { error });
       await db.statementAnalysis.update({
         where: { id: payload.analysisId },
-        data: { status: 'FAILED', validations: validations },
+        data: {
+          status: 'FAILED',
+          validations: {
+            create: aiValidations.map((validation) => ({
+              confidence: validation.confidence,
+              passed: validation.passed,
+              reasoning: validation.reasoning,
+              title: validation.title,
+              description: validation.description,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              additionalDetails: validation.additionalDetails,
+            })),
+          },
+          calculatedValidations: {
+            create: calculatedValidations.map((validation) => ({
+              passed: validation.passed,
+              reasoning: validation.reasoning,
+              title: validation.title,
+              description: validation.description,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              additionalDetails: validation.additionalDetails,
+            })),
+          },
+        },
       });
       return { analysisId: payload.analysisId, status: 'FAILED' };
     }
