@@ -10,7 +10,7 @@ import type {
 } from '@/lib/validation/schemas';
 import { db } from '@/server/db';
 import { analyzeDocumentQuality } from '@/lib/ai/analyze-document-quality';
-import { toAiValidation } from '@/lib/validation/resultParsing';
+import { toAiValidation } from '@/lib/validation/result-parsing';
 
 export const analyzeDocumentQualityTask = task({
   id: 'analyze-document-quality',
