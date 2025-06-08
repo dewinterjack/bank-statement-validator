@@ -51,7 +51,7 @@ export const analysisResultSchema = z.object({
   bankStatement: bankStatementSchema.partial().nullable(),
 });
 
-export const documentTypeSchema = z.object({
+export const documentClassificationSchema = z.object({
   isBankStatement: z
     .boolean()
     .describe('Whether the document is a bank statement'),
@@ -70,7 +70,7 @@ export const documentLegibilitySchema = z.object({
   isLegible: z
     .boolean()
     .describe('Whether the document is legible and suitable for processing'),
-  overallConfidence: z
+  confidence: z
     .number()
     .min(0)
     .max(1)
@@ -100,9 +100,6 @@ export const documentLegibilitySchema = z.object({
     }),
   ),
   verificationChecks: z.object({
-    isSharpAndLegible: z
-      .boolean()
-      .describe('Is the image sharp and text clearly readable?'),
     allFieldsVisible: z
       .boolean()
       .describe('Are all required fields visible and unobstructed?'),
@@ -111,18 +108,13 @@ export const documentLegibilitySchema = z.object({
       .describe(
         'No signs of visual tampering like strategically placed glare?',
       ),
-    meetsFormatRequirements: z
-      .boolean()
-      .describe(
-        'Does the file meet resolution and format requirements for OCR?',
-      ),
   }),
 });
 
 export type Transaction = z.infer<typeof transactionSchema>;
 export type BankStatement = z.infer<typeof bankStatementSchema>;
 export type AnalysisResult = z.infer<typeof analysisResultSchema>;
-export type DocumentType = z.infer<typeof documentTypeSchema>;
+
 export type ValidationResult = z.infer<typeof validationResultSchema>;
 export type ValidationStatus = z.infer<typeof validationStatusSchema>;
 

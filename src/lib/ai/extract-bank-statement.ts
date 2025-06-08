@@ -6,7 +6,7 @@ const SYSTEM_MESSAGE =
 
 const USER_MESSAGE_TEXT = 'Extract the bank statement from the document.';
 
-export async function generateBankStatementObject(
+export async function extractBankStatement(
   fileData: string,
   fileMimeType: string,
 ) {

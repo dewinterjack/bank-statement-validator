@@ -1,8 +1,8 @@
 import { google } from '@ai-sdk/google';
-import { generateObject } from 'ai';
+import { generateObject, type GenerateObjectResult } from 'ai';
 import type { z } from 'zod';
 
-interface DocumentAnalysisOptions<T extends z.ZodType> {
+interface DocumentAnalysisOptions<T extends z.ZodSchema> {
   systemMessage: string;
   userMessage: string;
   schema: T;
@@ -10,13 +10,17 @@ interface DocumentAnalysisOptions<T extends z.ZodType> {
   fileMimeType: string;
 }
 
-export async function generateDocumentAnalysis<T extends z.ZodType>({
+type DocumentAnalysisResult<T extends z.ZodSchema> = Promise<
+  GenerateObjectResult<z.infer<T>>
+>;
+
+export async function generateDocumentAnalysis<T extends z.ZodSchema>({
   systemMessage,
   userMessage,
   schema,
   fileData,
   fileMimeType,
-}: DocumentAnalysisOptions<T>) {
+}: DocumentAnalysisOptions<T>): DocumentAnalysisResult<T> {
   return generateObject({
     model: google('gemini-2.5-flash-preview-05-20'),
     messages: [
@@ -36,5 +40,5 @@ export async function generateDocumentAnalysis<T extends z.ZodType>({
       },
     ],
     schema,
-  });
+  }) as DocumentAnalysisResult<T>;
 }

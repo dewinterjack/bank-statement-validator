@@ -1,4 +1,4 @@
-import { documentLegibilitySchema } from './schemas';
+import { documentLegibilitySchema } from '@/lib/schemas';
 import { generateDocumentAnalysis } from './generate-document-analysis';
 
 const SYSTEM_MESSAGE = `You are a document quality analyzer. Your job is to assess the legibility and quality of uploaded documents to determine if they are suitable for OCR processing and data extraction.
@@ -23,7 +23,7 @@ Be thorough and specific in identifying issues and their locations within the do
 const USER_MESSAGE_TEXT =
   'Analyze this document for quality and legibility issues. Check if it meets the standards for reliable OCR processing and data extraction.';
 
-export async function checkDocumentLegibility(
+export async function analyzeDocumentQuality(
   fileData: string,
   fileMimeType: string,
 ) {

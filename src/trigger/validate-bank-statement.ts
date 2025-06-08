@@ -1,23 +1,20 @@
 import { s3Client } from '@/lib/s3-client';
-import { generateBankStatementObject } from '@/lib/generate-bank-statement-object';
-import { checkDocumentType } from '@/lib/check-document-type';
+import { extractBankStatement } from '@/lib/ai/extract-bank-statement';
+import { classifyDocument } from '@/lib/ai/classify-document';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { batch, logger, metadata, task } from '@trigger.dev/sdk/v3';
 import { validateBankStatement } from '@/lib/validators';
 import type { ValidationResult } from '@/lib/schemas';
 import { db } from '@/server/db';
-import { checkDocumentLegibility } from '@/lib/check-document-legibility';
+import { analyzeDocumentQuality } from '@/lib/ai/analyze-document-quality';
 
-export const documentLegibilityCheck = task({
-  id: 'document-legibility-check',
+export const analyzeDocumentQualityTask = task({
+  id: 'analyze-document-quality',
   maxDuration: 120,
   run: async (payload: { pdf: string }, { ctx }) => {
     logger.log('Starting document legibility analysis', { payload, ctx });
 
-    const result = await checkDocumentLegibility(
-      payload.pdf,
-      'application/pdf',
-    );
+    const result = await analyzeDocumentQuality(payload.pdf, 'application/pdf');
 
     logger.log('Document legibility analysis complete', {
       result: result.object,
@@ -29,15 +26,15 @@ export const documentLegibilityCheck = task({
   },
 });
 
-export const documentTypeCheck = task({
-  id: 'document-type-check',
+export const classifyDocumentTask = task({
+  id: 'classify-document',
   maxDuration: 120,
   run: async (payload: { pdf: string }, { ctx }) => {
-    logger.log('Starting document type analysis', { payload, ctx });
+    logger.log('Starting document classification', { payload, ctx });
 
-    const result = await checkDocumentType(payload.pdf, 'application/pdf');
+    const result = await classifyDocument(payload.pdf, 'application/pdf');
 
-    logger.log('Document type analysis complete', { result: result.object });
+    logger.log('Document classification complete', { result: result.object });
 
     return {
       result: result.object,
@@ -72,16 +69,16 @@ export const validateBankStatementTask = task({
     }
     const pdfBuffer = Buffer.from(await response.Body.transformToByteArray());
 
-    metadata.set('currentStep', 'Confirming document legibility');
+    metadata.set('currentStep', 'Performing initial validations');
     const {
       runs: [legibilityResult, typeResult],
     } = await batch.triggerByTaskAndWait([
       {
-        task: documentLegibilityCheck,
+        task: analyzeDocumentQualityTask,
         payload: { pdf: pdfBuffer.toString('base64') },
       },
       {
-        task: documentTypeCheck,
+        task: classifyDocumentTask,
         payload: { pdf: pdfBuffer.toString('base64') },
       },
     ]);
@@ -91,7 +88,7 @@ export const validateBankStatementTask = task({
         cause: typeResult.error,
       });
     }
-    const docTypeOutput = typeResult.output.result;
+    const classificationOutput = typeResult.output.result;
 
     if (!legibilityResult.ok) {
       throw new Error('Document legibility check failed', {
@@ -102,13 +99,13 @@ export const validateBankStatementTask = task({
 
     validations.push(
       {
-        check: 'Document Type',
-        status: docTypeOutput.isBankStatement ? 'PASS' : 'FAIL',
-        message: docTypeOutput.isBankStatement
+        check: 'Document Classification',
+        status: classificationOutput.isBankStatement ? 'PASS' : 'FAIL',
+        message: classificationOutput.isBankStatement
           ? 'Document identified as a bank statement'
           : `Document is not a bank statement.`,
-        confidence: docTypeOutput.confidence,
-        details: { reasoning: docTypeOutput.reasoning },
+        confidence: classificationOutput.confidence,
+        details: { reasoning: classificationOutput.reasoning },
       },
       {
         check: 'Document Legibility',
@@ -116,7 +113,7 @@ export const validateBankStatementTask = task({
         message: legibilityOutput.isLegible
           ? 'Document is legible'
           : 'Document is not legible',
-        confidence: legibilityOutput.overallConfidence,
+        confidence: legibilityOutput.confidence,
         details: {
           reasoning: legibilityOutput.qualityIssues
             .map((issue) => issue.description)
@@ -125,17 +122,20 @@ export const validateBankStatementTask = task({
       },
     );
 
-    if (docTypeOutput.confidence < 0.7 && docTypeOutput.isBankStatement) {
+    if (
+      classificationOutput.confidence < 0.7 &&
+      classificationOutput.isBankStatement
+    ) {
       validations.push({
         check: 'Document Confidence',
         status: 'WARN',
         message: 'Low confidence in classification. Please review carefully.',
-        confidence: docTypeOutput.confidence,
-        details: { reasoning: docTypeOutput.reasoning },
+        confidence: classificationOutput.confidence,
+        details: { reasoning: classificationOutput.reasoning },
       });
     }
 
-    if (!docTypeOutput.isBankStatement) {
+    if (!classificationOutput.isBankStatement) {
       await db.statementAnalysis.update({
         where: { id: payload.analysisId },
         data: { status: 'FAILED', validations: validations },
@@ -144,7 +144,7 @@ export const validateBankStatementTask = task({
     }
 
     metadata.set('currentStep', 'Extracting data');
-    const result = await generateBankStatementObject(
+    const result = await extractBankStatement(
       pdfBuffer.toString('base64'),
       'application/pdf',
     );

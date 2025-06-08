@@ -1,4 +1,4 @@
-import { documentTypeSchema } from '@/lib/schemas';
+import { documentClassificationSchema } from '@/lib/schemas';
 import { generateDocumentAnalysis } from './generate-document-analysis';
 
 const SYSTEM_MESSAGE = `You are a document classifier. Your job is to analyze a document and determine if it is a bank statement or not. 
@@ -16,14 +16,11 @@ Be thorough in your analysis and provide a confidence score based on how certain
 const USER_MESSAGE_TEXT =
   'Analyze this document and determine if it is a bank statement. Provide your confidence level and reasoning.';
 
-export async function checkDocumentType(
-  fileData: string,
-  fileMimeType: string,
-) {
+export async function classifyDocument(fileData: string, fileMimeType: string) {
   return generateDocumentAnalysis({
     systemMessage: SYSTEM_MESSAGE,
     userMessage: USER_MESSAGE_TEXT,
-    schema: documentTypeSchema,
+    schema: documentClassificationSchema,
     fileData,
     fileMimeType,
   });
