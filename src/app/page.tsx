@@ -107,7 +107,7 @@ export default function BankStatementAnalyzer() {
   };
 
   return (
-    <div className="bg-background min-h-screen p-4">
+    <div className="bg-background p-4">
       <div className="mx-auto max-w-6xl">
         {submissionError && (
           <Card className="border-destructive bg-destructive/10 mx-auto mb-4 max-w-2xl border">

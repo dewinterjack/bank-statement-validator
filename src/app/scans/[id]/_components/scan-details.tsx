@@ -4,8 +4,6 @@ import { BankStatement } from '@/app/_components/bank-statement';
 import { ValidationResults } from '@/app/_components/validation-results';
 import type { validateBankStatementTask } from '@/trigger/validate-bank-statement';
 import { useRealtimeRun } from '@trigger.dev/react-hooks';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export function ScanDetails({
   id,
@@ -18,7 +16,7 @@ export function ScanDetails({
 
   if (error) {
     return (
-      <div className="container mx-auto max-w-6xl p-4">
+      <div className="container mx-auto max-w-6xl p-4 text-red-500">
         <div>Error: {error.message}</div>
       </div>
     );
@@ -44,12 +42,6 @@ export function ScanDetails({
   return (
     <div className="container mx-auto max-w-6xl p-4">
       <div className="space-y-4">
-        <div className="flex justify-center">
-          <Button asChild>
-            <Link href="/">Analyse another document</Link>
-          </Button>
-        </div>
-
         <ValidationResults validations={run?.output?.validations ?? []} />
 
         {run?.output?.bankStatement && (

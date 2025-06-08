@@ -5,6 +5,7 @@ import { Geist } from 'next/font/google';
 
 import { TRPCReactProvider } from '@/trpc/react';
 import { cn } from '@/lib/utils';
+import { Header } from './_components/header';
 
 export const metadata: Metadata = {
   title: 'Bank Statement Validator',
@@ -25,8 +26,11 @@ export default function RootLayout({
       lang="en"
       className={cn(geist.variable, 'dark font-sans antialiased')}
     >
-      <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+      <body className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1">
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </main>
       </body>
     </html>
   );
