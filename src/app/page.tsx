@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,92 +11,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { experimental_useObject as useObject } from '@ai-sdk/react';
-import { bankStatementSchema, type PartialBankStatement } from '@/lib/schemas';
-import { StatementHistory } from './_components/statement-history';
-import { BankStatement } from './_components/bank-statement';
-import { api } from '@/trpc/react';
-import { validateBankStatement } from '@/lib/validators';
+import { extractBankStatement } from '@/lib/actions';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [selectedStatementId, setSelectedStatementId] = useState<string | null>(
-    null,
-  );
 
-  const [displayedBankStatement, setDisplayedBankStatement] =
-    useState<PartialBankStatement | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-
-  const {
-    object: streamedObject,
-    submit,
-    isLoading,
-    error: streamError,
-  } = useObject({
-    api: '/api/extract',
-    schema: bankStatementSchema,
-    onFinish: async ({ object }) => {
-      if (!object) {
-        return;
-      }
-      const validationErrors = validateBankStatement(object);
-      if (validationErrors.length > 0) {
-        setSubmissionError(validationErrors.join('\n'));
-      }
-    },
-  });
-
-  const {
-    data: selectedStatement,
-    isLoading: isLoadingStatement,
-    error: statementError,
-  } = api.statement.getById.useQuery(
-    { id: selectedStatementId! },
-    {
-      enabled: !!selectedStatementId,
-    },
-  );
-
-  useEffect(() => {
-    if (streamedObject) {
-      setDisplayedBankStatement(streamedObject);
-      setSubmissionError(null);
-    }
-  }, [streamedObject]);
-
-  useEffect(() => {
-    if (selectedStatement) {
-      setDisplayedBankStatement(selectedStatement);
-      setSelectedStatementId(null);
-    }
-  }, [selectedStatement]);
-
-  useEffect(() => {
-    const err = streamError ?? statementError;
-    if (err) {
-      setSubmissionError(
-        err.message ?? 'An error occurred while processing the statement.',
-      );
-      setDisplayedBankStatement(null);
-    }
-  }, [streamError, statementError]);
 
   const commonSetFile = (newFile: File | null) => {
     setFile(newFile);
-    setSelectedStatementId(null);
     if (newFile) {
-      setDisplayedBankStatement(null);
       setSubmissionError(null);
     }
-  };
-
-  const handleSelectStatement = (id: string) => {
-    setFile(null);
-    setDisplayedBankStatement(null);
-    setSubmissionError(null);
-    setSelectedStatementId(id);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -130,26 +58,40 @@ export default function BankStatementAnalyzer() {
 
   const handleAnalyze = async () => {
     if (file) {
-      setDisplayedBankStatement(null);
       setSubmissionError(null);
+      setIsLoading(true);
+
       try {
         const reader = new FileReader();
         reader.onload = async () => {
           try {
-            const base64Data = (reader.result as string).split(',')[1];
-            submit({ file: { data: base64Data, mimeType: file.type } });
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            if (!base64Data) {
+              throw new Error('Failed to extract file data');
+            }
+            await extractBankStatement({
+              data: base64Data,
+              mimeType: file.type,
+            });
+            setIsLoading(false);
           } catch (err) {
-            console.error('Error submitting to API:', err);
+            if (err instanceof Error && err.message === 'NEXT_REDIRECT') {
+              return;
+            }
+            console.error('Error submitting to server action:', err);
             setSubmissionError(
               err instanceof Error
                 ? err.message
                 : 'Failed to submit for analysis.',
             );
+            setIsLoading(false);
           }
         };
         reader.onerror = (error) => {
           console.error('Error reading file:', error);
           setSubmissionError('Error reading file.');
+          setIsLoading(false);
         };
         reader.readAsDataURL(file);
       } catch (err) {
@@ -159,26 +101,10 @@ export default function BankStatementAnalyzer() {
             ? err.message
             : 'Error preparing file for submission.',
         );
+        setIsLoading(false);
       }
     }
   };
-
-  const handleReset = () => {
-    commonSetFile(null);
-    setDisplayedBankStatement(null);
-    setSubmissionError(null);
-    setSelectedStatementId(null);
-  };
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const currentLoading = isLoading || isLoadingStatement;
 
   return (
     <div className="bg-background min-h-screen p-4">
@@ -186,7 +112,7 @@ export default function BankStatementAnalyzer() {
         {submissionError && (
           <Card className="border-destructive bg-destructive/10 mx-auto mb-4 max-w-2xl border">
             <CardHeader>
-              <CardTitle className="text-destructive">Analysis Error</CardTitle>
+              <CardTitle className="text-destructive">Upload Error</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-destructive">{submissionError}</p>
@@ -201,7 +127,7 @@ export default function BankStatementAnalyzer() {
           </Card>
         )}
 
-        {!displayedBankStatement && !currentLoading && (
+        {!isLoading && (
           <div className="space-y-8">
             <Card className="mx-auto max-w-2xl">
               <CardHeader>
@@ -278,35 +204,7 @@ export default function BankStatementAnalyzer() {
                 ) : null}
               </CardContent>
             </Card>
-
-            <StatementHistory onSelectStatement={handleSelectStatement} />
           </div>
-        )}
-
-        {currentLoading && (
-          <Card className="mx-auto max-w-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="border-primary h-5 w-5 animate-spin rounded-full border-b-2"></div>
-                {isLoading ? 'Processing Bank Statement' : 'Loading Statement'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 py-10 text-center">
-              <p className="text-muted-foreground">
-                {isLoading
-                  ? 'Extracting information from your document...'
-                  : 'Loading...'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {displayedBankStatement && (
-          <BankStatement
-            displayedBankStatement={displayedBankStatement}
-            handleReset={handleReset}
-            formatDate={formatDate}
-          />
         )}
       </div>
     </div>

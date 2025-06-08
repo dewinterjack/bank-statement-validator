@@ -1,8 +1,9 @@
-import type { BankStatement } from './schemas';
+import type { BankStatement, ValidationResult } from './schemas';
 
-export function validateBankStatement(statement: BankStatement): string[] {
-  const errors: string[] = [];
-
+export function validateBankStatement(
+  statement: BankStatement,
+): ValidationResult[] {
+  const results: ValidationResult[] = [];
   const totalTransactions = statement.transactions.reduce(
     (sum, transaction) => {
       if (transaction.type === 'credit') {
@@ -15,13 +16,25 @@ export function validateBankStatement(statement: BankStatement): string[] {
   );
 
   const balanceDifference = statement.endingBalance - statement.startingBalance;
-
   // small epsilon for floating point comparison
   if (Math.abs(totalTransactions - balanceDifference) > 0.01) {
-    errors.push(
-      `Transaction sum (${totalTransactions.toFixed(2)}) does not reconcile with balance difference (${balanceDifference.toFixed(2)}).`,
-    );
+    results.push({
+      check: 'Balance Reconciliation',
+      status: 'FAIL',
+      message: `Transaction sum (${totalTransactions.toFixed(2)}) does not match balance change (${balanceDifference.toFixed(2)}).`,
+      details: {
+        calculatedChange: totalTransactions,
+        reportedChange: balanceDifference,
+      },
+    });
+  } else {
+    results.push({
+      check: 'Balance Reconciliation',
+      status: 'PASS',
+      message:
+        'Transaction amounts correctly reconcile with the balance change.',
+    });
   }
 
-  return errors;
+  return results;
 }

@@ -1,7 +1,9 @@
-import { extractBankStatement } from '@/lib/stream-bank-statement';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client } from '@/lib/s3-client';
 import { v4 as uuidv4 } from 'uuid';
+import { tasks } from '@trigger.dev/sdk/v3';
+import type { validateBankStatementTask } from '@/trigger/validate-bank-statement';
+import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 
@@ -18,7 +20,8 @@ export async function POST(req: Request) {
     });
   }
 
-  const s3Key = `bank-statements/${uuidv4()}.pdf`;
+  const analysisId = uuidv4();
+  const s3Key = `bank-statements/${analysisId}.pdf`;
 
   try {
     await s3Client.send(
@@ -31,13 +34,19 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error('Error uploading to S3:', error);
-    return new Response(JSON.stringify({ error: 'Failed to upload file to S3.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: 'Failed to upload file to S3.' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   }
 
-  const result = await extractBankStatement(file.data, file.mimeType, { s3Key });
+  await tasks.trigger<typeof validateBankStatementTask>(
+    'validate-bank-statement',
+    { s3Key, analysisId },
+  );
 
-  return result.toTextStreamResponse();
+  return NextResponse.json({ analysisId });
 }
