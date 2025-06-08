@@ -6,52 +6,61 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CheckCircle2, AlertTriangle, XCircle, HelpCircle } from 'lucide-react';
-import type { ValidationResult, ValidationStatus } from '@/lib/schemas';
+import { CheckCircle, XCircle, HelpCircle } from 'lucide-react';
+import type {
+  AIValidation,
+  CalculatedValidation,
+} from '@/lib/validation/schemas';
 import { Badge } from '@/components/ui/badge';
 
 interface ValidationResultsProps {
-  validations: ValidationResult[];
+  aiValidations: AIValidation[];
+  calculatedValidations: CalculatedValidation[];
 }
 
-const statusIcons: Record<ValidationStatus, React.ElementType> = {
-  PASS: CheckCircle2,
-  WARN: AlertTriangle,
+const statusIcons = {
+  PASS: CheckCircle,
   FAIL: XCircle,
+  UNKNOWN: HelpCircle,
 };
 
-const statusColors: Record<ValidationStatus, string> = {
+const statusColors = {
   PASS: 'text-green-600',
-  WARN: 'text-yellow-600',
   FAIL: 'text-red-600',
+  UNKNOWN: 'text-muted-foreground',
 };
 
-const statusBadges: Record<
-  ValidationStatus,
-  'default' | 'destructive' | 'secondary'
-> = {
-  PASS: 'default',
-  WARN: 'secondary',
-  FAIL: 'destructive',
+const statusBadges = {
+  PASS: 'default' as const,
+  FAIL: 'destructive' as const,
+  UNKNOWN: 'secondary' as const,
 };
 
-export function ValidationResults({ validations }: ValidationResultsProps) {
-  if (validations.length === 0) {
-    return null;
+export function ValidationResults({
+  aiValidations,
+  calculatedValidations,
+}: ValidationResultsProps) {
+  if (aiValidations.length === 0 && calculatedValidations.length === 0) {
+    return (
+      <div className="text-destructive text-center text-sm">
+        No validations found
+      </div>
+    );
   }
 
-  const overallStatus = validations.some((v) => v.status === 'FAIL')
-    ? 'FAIL'
-    : validations.some((v) => v.status === 'WARN')
-      ? 'WARN'
-      : 'PASS';
+  const allValidations = [
+    ...aiValidations.map((v) => ({ ...v, type: 'AI' as const })),
+    ...calculatedValidations.map((v) => ({
+      ...v,
+      type: 'CALCULATED' as const,
+    })),
+  ];
 
   return (
     <Card>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           Validation Summary
-          <Badge variant={statusBadges[overallStatus]}>{overallStatus}</Badge>
         </CardTitle>
         <CardDescription className="text-sm">
           Automated checks performed on the uploaded document.
@@ -59,21 +68,22 @@ export function ValidationResults({ validations }: ValidationResultsProps) {
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-2">
-          {validations.map((validation, index) => {
-            const Icon = statusIcons[validation.status] ?? HelpCircle;
-            const color =
-              statusColors[validation.status] ?? 'text-muted-foreground';
+          {allValidations.map((validation, index) => {
+            const status = validation.passed ? 'PASS' : 'FAIL';
+            const Icon = statusIcons[status] ?? HelpCircle;
+            const color = statusColors[status] ?? 'text-muted-foreground';
+
             return (
               <div key={index} className="flex items-start gap-3 py-2">
                 <Icon className={`${color} mt-0.5 h-4 w-4 flex-shrink-0`} />
                 <div className="min-w-0 flex-grow">
                   <p className="text-sm leading-tight font-medium">
-                    {validation.check}
+                    {validation.title}
                   </p>
                   <p className="text-muted-foreground mt-0.5 text-xs leading-tight">
-                    {validation.message}
+                    {validation.description ?? validation.reasoning}
                   </p>
-                  {validation.confidence !== undefined && (
+                  {validation.type === 'AI' && 'confidence' in validation && (
                     <div className="mt-1.5 flex items-center gap-2">
                       <span className="text-muted-foreground text-xs">
                         Confidence:

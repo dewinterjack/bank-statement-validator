@@ -8,6 +8,7 @@ interface DocumentAnalysisOptions<T extends z.ZodSchema> {
   schema: T;
   fileData: string;
   fileMimeType: string;
+  arrayOutput?: boolean;
 }
 
 type DocumentAnalysisResult<T extends z.ZodSchema> = Promise<

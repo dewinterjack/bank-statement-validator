@@ -42,7 +42,10 @@ export function ScanDetails({
   return (
     <div className="container mx-auto max-w-6xl p-4">
       <div className="space-y-4">
-        <ValidationResults validations={run?.output?.validations ?? []} />
+        <ValidationResults
+          aiValidations={run?.output?.aiValidations ?? []}
+          calculatedValidations={run?.output?.calculatedValidations ?? []}
+        />
 
         {run?.output?.bankStatement && (
           <BankStatement statement={run?.output?.bankStatement} />

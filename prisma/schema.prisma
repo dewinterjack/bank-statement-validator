@@ -10,15 +10,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Non AI validation results
+model CalculatedValidation {
+  id                  String            @id @default(uuid())
+  passed              Boolean
+  reasoning           String
+  title               String
+  description         String?
+  additionalDetails   Json?
+  statementAnalysisId String
+  statementAnalysis   StatementAnalysis @relation(fields: [statementAnalysisId], references: [id])
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model AIValidation {
+  id                  String            @id @default(uuid())
+  confidence          Int               @db.SmallInt
+  passed              Boolean
+  reasoning           String
+  title               String
+  description         String?
+  additionalDetails   Json?
+  statementAnalysisId String
+  statementAnalysis   StatementAnalysis @relation(fields: [statementAnalysisId], references: [id])
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
 model StatementAnalysis {
-  id              String         @id @default(uuid())
-  s3Key           String         @unique
-  status          String // e.g., 'PROCESSING', 'COMPLETED', 'FAILED'
-  validations     Json           @default("[]")
-  bankStatement   BankStatement? @relation(fields: [bankStatementId], references: [id])
-  bankStatementId String?        @unique
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                    String                 @id @default(uuid())
+  s3Key                 String                 @unique
+  status                String // e.g., 'PROCESSING', 'COMPLETED', 'FAILED'
+  validations           AIValidation[]
+  calculatedValidations CalculatedValidation[]
+  bankStatement         BankStatement?         @relation(fields: [bankStatementId], references: [id])
+  bankStatementId       String?                @unique
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model BankStatement {
