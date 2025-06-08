@@ -40,7 +40,7 @@ model AIValidation {
 
 model StatementAnalysis {
   id                    String                 @id @default(uuid())
-  s3Key                 String                 @unique
+  s3Key                 String
   status                String // e.g., 'PROCESSING', 'COMPLETED', 'FAILED'
   validations           AIValidation[]
   calculatedValidations CalculatedValidation[]
