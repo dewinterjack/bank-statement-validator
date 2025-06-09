@@ -1,7 +1,7 @@
 'use client';
 
-import { BankStatementDisplay } from '@/app/_components/bank-statement';
-import { ValidationResults } from '@/app/_components/validation-results';
+import { BankStatementDisplay } from '@/components/bank-statement';
+import { ValidationResults } from '@/components/validation-results';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';

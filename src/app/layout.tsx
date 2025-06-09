@@ -5,7 +5,7 @@ import { Geist } from 'next/font/google';
 
 import { TRPCReactProvider } from '@/trpc/react';
 import { cn } from '@/lib/utils';
-import { Header } from './_components/header';
+import { Header } from '../components/header';
 
 export const metadata: Metadata = {
   title: 'Bank Statement Validator',

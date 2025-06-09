@@ -10,7 +10,6 @@ export default async function RunPage({
   const { id } = await params;
   const cookieStore = await cookies();
   const publicAccessToken = cookieStore.get('publicAccessToken');
-  const freshUpload = cookieStore.get('freshUpload');
 
   if (!publicAccessToken) {
     return <div>No public access token found</div>;

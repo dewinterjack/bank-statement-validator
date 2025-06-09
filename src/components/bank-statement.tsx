@@ -17,7 +17,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { TransactionDisplay } from './transaction';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import type { RouterOutputs } from '@/trpc/react';
 import type { BankStatement, Transaction } from '@prisma/client';
 
 interface BankStatementProps {
