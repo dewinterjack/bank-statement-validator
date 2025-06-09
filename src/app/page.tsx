@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { extractBankStatement } from '@/lib/actions';
+import { AnalysisPreviews } from '@/components/analysis-previews';
 
 export default function BankStatementAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
@@ -204,6 +205,8 @@ export default function BankStatementAnalyzer() {
                 ) : null}
               </CardContent>
             </Card>
+
+            <AnalysisPreviews />
           </div>
         )}
       </div>

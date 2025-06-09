@@ -5,7 +5,7 @@ import { ValidationResults } from '@/components/validation-results';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
-import { useBankValidation } from '@/hooks/useBankValidation';
+import { useBankValidation } from '@/hooks/use-bank-validation';
 
 export function ScanDetails({ id }: { id: string }) {
   const { status, analysisQuery } = useBankValidation(id);

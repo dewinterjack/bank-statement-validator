@@ -24,4 +24,23 @@ export const analysisRouter = createTRPCRouter({
 
       return analysis;
     }),
+  getPreviews: publicProcedure.query(async ({ ctx }) => {
+    const analyses = await ctx.db.statementAnalysis.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        createdAt: true,
+        bankStatement: {
+          select: {
+            accountNumber: true,
+            accountHolderName: true,
+            startDate: true,
+            endDate: true,
+          },
+        },
+      },
+    });
+
+    return analyses;
+  }),
 });
